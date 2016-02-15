@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module id="com.polarion.alm.extensions.codereview" version="1.0.0">
+
+	<contribution configuration-id="com.polarion.alm.tracker.workflow.conditions">
+		<condition prototype="WorkItem" name="FastTrackReviewPermitted" clazz="com.polarion.alm.extensions.codereview.FastTrackReviewCondition"/>
+	</contribution>
+
+	<contribution configuration-id="com.polarion.alm.tracker.workflow.functions">
+		<function prototype="WorkItem" name="FastTrackReview" clazz="com.polarion.alm.extensions.codereview.FastTrackReviewFunction"/>
+	</contribution>
+	
+	<contribution configuration-id="com.polarion.platform.jobs.configuration">
+		<jobUnitFactory name="codereview.checker" factory="codeReviewCheckerJobUnitFactory"/>
+	</contribution>
+	
+	<service-point id="codeReviewCheckerJobUnitFactory" interface="com.polarion.platform.jobs.IJobUnitFactory">
+		<invoke-factory>
+			<construct class="com.polarion.alm.extensions.codereview.CodeReviewCheckerJobUnitFactory">
+			</construct>
+		</invoke-factory>
+	</service-point>
+	
+</module>

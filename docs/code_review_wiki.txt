@@ -1,0 +1,55 @@
+## --- configuration ---
+#set($codeReviewerRole = "project_code_reviewer")
+#set($awaitingCodeReviewQuery = "status:awaiting-code-review")
+#set($codeReviewerField = "codeReviewer")
+#set($projectId = $page.space.projectId)
+## --- configuration end ---
+
+#set($project = $trackerService.projectsService.getProject($projectId))
+
+1 Code Review
+
+#set($reviewerIds = $trackerService.dataService.securityService.getUsersForContextRole($codeReviewerRole, $project.contextId))
+#if($reviewerIds.contains($me))
+*You are a code reviewer - go and review something.*
+#else
+*You are not a code reviewer - sit back and relax.*
+#end
+
+#set($beingReviewedByMe = $trackerService.queryWorkItems($project, "($awaitingCodeReviewQuery) AND ${codeReviewerField}.KEY:$me", "id"))
+#if(!$beingReviewedByMe.isEmpty())
+#warning("You have items to review!")
+#end
+
+1.1 Waiting for Review
+
+List is sorted by the wait time, pick the oldest ones first, please.
+
+{workitems:($awaitingCodeReviewQuery) AND NOT HAS_VALUE:${codeReviewerField}.KEY|fields=id, title, assignee, updated|sortby=updated id}
+
+1.1 Being Reviewed
+
+{parameter:codeReviewer|type=user|role=$codeReviewerRole|allow-no-value=true}
+{parameter-form}Filter by reviewer: {parameter-editor:codeReviewer}{parameter-form-submit}{parameter-form-save}{parameter-form}
+
+#set($codeReviewer = $pageParameters.getAsString("codeReviewer"))
+
+{workitems:($awaitingCodeReviewQuery) AND #if($codeReviewer == "")HAS_VALUE:${codeReviewerField}.KEY#else ${codeReviewerField}.KEY:$codeReviewer#end|fields=$codeReviewerField, id, title, assignee, updated|sortby=updated id}
+
+## sortTool is part of http://extensions.polarion.com/extensions/83-wiki-scripting-tools
+#if($sortTool)
+
+1.1 Review Statistics
+
+#set($reviewers = $trackerService.dataService.sqlSearch("SELECT USER.C_PK, COUNT(CF.C_NAME) FROM USER, WORKITEM, CF_WORKITEM CF WHERE CF.C_NAME='$codeReviewerField' AND USER.C_ID=CF.C_STRING_VALUE AND WORKITEM.C_PK=CF.FK_WORKITEM AND WORKITEM.FK_PROJECT='$project.uri' GROUP BY USER.C_PK ORDER BY COUNT(CF.C_NAME) DESC"))
+#set($assigneeIds = $sortTool.sort($trackerService.dataService.securityService.getUsersForContextRole("project_assignable", $project.contextId)))
+{table}
+Reviewer | Number of Reviewed Items #foreach($assigneeId in $assigneeIds)| {user:$assigneeId|label=$trackerService.getTrackerUser($assigneeId).initials}#end
+
+#foreach($reviewer in $reviewers)
+{user:$reviewer.id|display=long} | {workitems:${codeReviewerField}.KEY:$reviewer.id|display=count} #foreach($assigneeId in $assigneeIds)| {workitems:${codeReviewerField}.KEY:$reviewer.id AND assignee.id:$assigneeId|display=count}#end
+
+#end
+{table}
+
+#end

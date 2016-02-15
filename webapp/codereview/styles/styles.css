@@ -1,0 +1,177 @@
+/*
+  Default cascading style sheet file for JHighlight - http://jhighlight.dev.java.net
+  Copyright 2004-2006 Geert Bevin <gbevin[remove] at uwyn dot com>
+  Distributed under the terms of either:
+   - the common development and distribution license (CDDL), v1.0; or
+   - the GNU Lesser General Public License, v2.1 or later
+*/
+
+body{
+	font-size:13px;
+}
+
+P{
+	margin: 0px;
+}
+
+A,TD,DIV,LI,UL,INPUT,BUTTON, SPAN{
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+A:link { text-decoration:none; color:black;}
+A:visited { text-decoration:none; color:black;}
+A:hover { text-decoration:underline; color:black;}
+
+
+.cr_nav_container {
+	height: 30px;
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	border: 1px solid #C5C5C5;
+	padding: 5px 0px 3px 5px;
+	background: white;
+	border-radius: 7px;
+}
+
+.cr_nav_button {
+	border: 1px solid black;
+	float: left;
+	padding: 5px 40px;
+	margin-right: 5px;
+	cursor: pointer;
+	
+	font-size: 14px;
+	font-family: Arial;
+	font-weight: bold;
+	color: #717171;
+	text-shadow: 1px 1px 0px white;
+	border: 1px solid #C5C5C5;
+	border-radius: 7px;
+	background: url("/polarion/ria/images/dialogs/button_background.png")
+		repeat-x center left;
+	cursor: pointer;
+}
+
+.cr_nav {
+	margin:20px;
+}
+
+.cr_nav a{
+	border: 1px solid black;
+	padding:4px;
+	border-radius: 3px;
+	background: url("/polarion/ria/images/dialogs/button_background.png")
+		repeat-x center left;
+}
+
+.cr_main_container {
+}
+
+.cr_expand {
+	padding: 5px;
+	background:url("/polarion/ria/images/backgrounds/btn_back.png") repeat-x top left;
+	border: 1px solid #C5C5C5;
+	border-radius: 2px 2px 2px 2px;
+	color: #595959;
+	cursor:pointer;
+	font-family:arial,helvetica;
+	font-size:13px;
+}
+
+.cr_revision_info {
+	padding:7px;
+	margin-top:12px;
+	font-size:11px;
+	border-radius: 7px;
+	color:black;
+	text-shadow:white 1px 1px 0.01em;
+	background:#d5fac4;
+}
+
+.cr_revision_label {
+	padding:7px;
+	margin-top:12px;
+	font-size:12px;
+	border-radius: 7px;
+	color:black;
+	text-shadow:white 1px 1px 0.01em;
+	background:#d5fac4;
+}
+
+.cr_file_label {
+	padding:7px;
+	margin-top:4px;
+	border-radius: 7px 7px 0px 0px; 
+	font-weight:bold;
+	background:#3d594b;
+	color:white;
+	text-shadow:black 1px 1px 0.01em
+}
+
+.cr_file_label a {
+	color:white;
+}
+
+.cr_file_label_lite {
+	padding:2px;
+	margin-top:2px;
+	color:black;
+}
+
+.cr_file_label_lite a {
+	color:black;
+}
+
+.cr_file_label_lite span {
+	font-weight: bold;
+}
+
+.cr_file_content {
+	border-radius: 0px 0px 7px 7px; 
+	padding:7px;
+	border: 2px solid #3d594b;
+	font-family: monospace !important;
+}
+
+.cr_file_content DIV, .cr_file_content SPAN {
+	font-family: monospace !important;
+}
+
+.cr_file_content_add {
+	background: #FAFCFA;
+}
+
+.cr_file_content_delete {
+	background: #FFFAFA;
+}
+
+.cr_file_content_modify {
+	
+}
+
+.cr_fileImg {
+	vertical-align: middle;
+	margin-right:2px;
+}
+
+.diff-html-added{
+	background-color:#ccffcc;
+}
+
+.diff-html-removed{
+	text-decoration: line-through;background-color:#fdc6c6;
+}
+
+.diff-html-changed{
+	background-color: #c6c6fd;
+}
+
+.diff-added-image{
+	border:2px solid #ccffcc;
+}
+
+.diff-removed-image{
+	border:2px solid #fdc6c6;
+}
+

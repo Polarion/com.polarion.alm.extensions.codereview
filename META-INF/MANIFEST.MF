@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Require-Bundle: com.polarion.portal.tomcat,
+ com.polarion.alm.ui,
+ com.polarion.platform.guice,
+ com.polarion.alm.tracker,
+ com.polarion.platform.jobs
+Bundle-Vendor: Polarion Software
+Bundle-Version: 1.0.33
+Bundle-Name: Code Review Extension for Polarion ALM
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: com.polarion.alm.extensions.codereview;singleton:=true
+Bundle-ClassPath: codeReviewExtension.jar,
+ src/,
+ META-INF/
+Guice-Modules: com.polarion.alm.extensions.codereview.CodeReviewExtensionModule
+Export-Package: com.polarion.alm.extensions.codereview
