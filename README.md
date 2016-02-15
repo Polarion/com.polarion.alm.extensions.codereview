@@ -3,6 +3,7 @@
 Copyright (C) 2004-2016 Polarion Software  
 TextDiffMatchPatch.java Copyright (C) 2012 Tine Kondo  
 TextDiffMatchPatch.java Copyright (C) 2006 Google Inc.
+highlight.js Copyright (C) 2006 Ivan Sagalaev
 
 This Polarion® ALM™ extension provides ability to do code review through Polarion portal.
 
