@@ -14,7 +14,7 @@ This Polarion® ALM™ extension provides ability to do code review through Pola
 
 ## Installation
 
-1. Download packaged extension from http://extensions.polarion.com/extensions/
+1. Download packaged extension from http://extensions.polarion.com/extensions/235-code-review-in-polarion
 2. Stop Polarion server.
 3. Extract `com.polarion.alm.extensions.codereview.zip` into `<Polarion Installation>/polarion/extensions`.
 4. Start Polarion server.
