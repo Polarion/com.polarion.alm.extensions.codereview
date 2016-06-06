@@ -22,7 +22,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
@@ -177,6 +179,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             super(name, creator);
         }
 
+        private final @NotNull Function<IWorkItem, Properties> configurationLoader = Parameters.perContextCachingConfigurationLoader(Parameters.repositoryConfigurationLoader());
         private /*@NotNull*/ String[] notificationReceivers;
         private /*@NotNull*/ String notificationSender;
         private @Nullable String notificationSubjectPrefix;
@@ -344,7 +347,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             }
         }
 
-        private void processWorkItem(@NotNull IProgressMonitor progress, IWorkItem wi, Set<IWorkItem> processedWIs, Set<IWorkItem> wisToBeReviewed) {
+        private void processWorkItem(@NotNull IProgressMonitor progress, @NotNull IWorkItem wi, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed) {
             if (progress.isCanceled()) {
                 return;
             }
@@ -354,7 +357,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             }
             processedWIs.add(wi);
             boolean needsReview = false;
-            Parameters parameters = new Parameters(wi, Parameters.perContextCachingConfigurationLoader(Parameters.repositoryConfigurationLoader()));
+            Parameters parameters = new Parameters(wi, configurationLoader);
             if (wi.getResolution() == null) {
                 if (parameters.unresolvedWorkItemWithRevisionsNeedsTimePoint()) {
                     if (wi.getTimePoint() == null) {
