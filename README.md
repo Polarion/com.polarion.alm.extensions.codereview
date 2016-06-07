@@ -99,6 +99,7 @@ reviewerField=codeReviewer
 inReviewStatus=awaiting-code-review
 successfulReviewWorkflowAction=mark_done
 successfulReviewResolution=fixed
+reviewerRole=project_code_reviewer
 ```
 
 - `reviewedRevisionsField` should contain the id of the field listing reviewed revisions
@@ -106,6 +107,7 @@ successfulReviewResolution=fixed
 - `inReviewStatus` should contain the id of the status for which the Code Review Form Extension allows to perform code review
 - `successfulReviewWorkflowAction` should contain the id of the workflow action which will be executed by "Review all & advance" action (this configuration is optional)
 - `successfulReviewResolution` should contain the id of the resolution option which will be set into Resolution field upon executing "Review all & advance" action if the workflow requires Resolution field to be filled (this configuration is optional)
+- `reviewerRole` should contain name of the role added to code reviewers
 
 This is how the Code Review Form Extension looks like:
 

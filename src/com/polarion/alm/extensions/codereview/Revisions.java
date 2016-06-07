@@ -226,8 +226,9 @@ public final class Revisions {
         return td;
     }
 
+    private static final @NotNull String refreshCall = "setTimeout(function() { var refreshes = document.querySelectorAll('[src*=refreshBtn]'); refreshes[refreshes.length - 1].parentNode.click(); }, 500);";
+
     public void asHTMLTable(@NotNull HtmlFragmentBuilder builder, @NotNull Parameters parameters) {
-        String refreshCall = "setTimeout(function() { var refreshes = document.querySelectorAll('[src*=refreshBtn]'); refreshes[refreshes.length - 1].parentNode.click(); }, 500);";
         HtmlContentBuilder form = builder.html(
                 "<form method=\"post\" action=\"" + builder.target().toEncodedUrl(parameters.link().toHtmlLink())
                         + "\" onsubmit=\"" + refreshCall + "\">");
@@ -239,50 +240,58 @@ public final class Revisions {
         header.append().tag().th().append().text("Author");
         header.append().tag().th().append().text("Reviewer");
         header.append().tag().th().append().text("Message");
-        boolean inReviewStatus = parameters.isInReviewStatus();
+        boolean canReview = parameters.canReview();
         for (RevisionModel revisionModel : revisionModels) {
-            HtmlTagBuilder tr = table.append().tag().tr();
-            tr.append().tag().td().append().html("<input type=\"checkbox\" name=\"" + CodeReviewServlet.PARAM_REVISIONS_TO_MARK + "\" value=\"" + revisionModel.getKey() + "\"" + (revisionModel.reviewed ? " checked disabled" : "")
-                    + (inReviewStatus ? "" : " disabled") + ">");
-            HtmlTagBuilder revisionTD = nowrapTD(tr);
-            if (!revisionModel.defaultRepository) {
-                HtmlTagBuilder span = revisionTD.append().tag().span();
-                span.attributes().title("Non-default repository " + revisionModel.revision.getRepositoryName());
-                span.append().text("(N) ");
-            }
-            revisionTD.append().decoratedLabel().link(HtmlLinkFactory.fromEncodedUrl(revisionModel.revision.getViewURL()), true).append().text(revisionModel.revision.getName());
-            nowrapTD(tr).append().text(formatDate(revisionModel.revision.getCreated()));
-            nowrapTD(tr).append().text(getUserLabel(revisionModel.revision.getStringAuthor(), "?"));
-            nowrapTD(tr).append().text(getUserLabel(revisionModel.reviewer, revisionModel.reviewed ? "?" : ""));
-            HtmlTagBuilder messageTD = nowrapTD(tr);
-            String message = revisionModel.revision.getMessage();
-            if (message != null) {
-                messageTD.attributes().title(message);
-                messageTD.append().text(message.substring(0, Math.min(message.length(), 200)));
-            }
+            appendRevisionRow(table, canReview, revisionModel);
         }
-        if (inReviewStatus) {
-            form.html("<input type=\"submit\" name=\"" + CodeReviewServlet.PARAM_REVIEW_SELECTED + "\" value=\"Review selected\">");
-            form.nbsp();
-            Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_REVIEW_SELECTED, "1");
-            for (RevisionModel revisionModel : revisionModels) {
-                if (!revisionModel.reviewed) {
-                    link.withAdditionalParameter(CodeReviewServlet.PARAM_REVISIONS_TO_MARK, revisionModel.getKey());
-                }
-            }
-            HtmlTagBuilder reviewAll = form.tag().b().append().tag().a();
-            reviewAll.attributes().href(link.toHtmlLink());
-            reviewAll.attributes().onClick(refreshCall);
-            reviewAll.append().text("[ Review all ]");
-            if (parameters.isWorkflowActionConfigured()) {
-                form.nbsp();
-                HtmlTagBuilder reviewAllSuccess = form.tag().b().append().tag().a();
-                reviewAllSuccess.attributes().href(link.withWorkflowAction(WorkflowAction.successfulReview).toHtmlLink());
-                reviewAllSuccess.attributes().onClick(refreshCall);
-                reviewAllSuccess.append().text("[ Review all & advance ]");
-            }
+        if (canReview) {
+            appendButtons(parameters, form);
         }
         form.html("</form>");
+    }
+
+    private void appendRevisionRow(@NotNull HtmlTagBuilder table, boolean editable, @NotNull RevisionModel revisionModel) {
+        HtmlTagBuilder tr = table.append().tag().tr();
+        tr.append().tag().td().append().html("<input type=\"checkbox\" name=\"" + CodeReviewServlet.PARAM_REVISIONS_TO_MARK + "\" value=\"" + revisionModel.getKey() + "\"" + (revisionModel.reviewed ? " checked disabled" : "")
+                + (editable ? "" : " disabled") + ">");
+        HtmlTagBuilder revisionTD = nowrapTD(tr);
+        if (!revisionModel.defaultRepository) {
+            HtmlTagBuilder span = revisionTD.append().tag().span();
+            span.attributes().title("Non-default repository " + revisionModel.revision.getRepositoryName());
+            span.append().text("(N) ");
+        }
+        revisionTD.append().decoratedLabel().link(HtmlLinkFactory.fromEncodedUrl(revisionModel.revision.getViewURL()), true).append().text(revisionModel.revision.getName());
+        nowrapTD(tr).append().text(formatDate(revisionModel.revision.getCreated()));
+        nowrapTD(tr).append().text(getUserLabel(revisionModel.revision.getStringAuthor(), "?"));
+        nowrapTD(tr).append().text(getUserLabel(revisionModel.reviewer, revisionModel.reviewed ? "?" : ""));
+        HtmlTagBuilder messageTD = nowrapTD(tr);
+        String message = revisionModel.revision.getMessage();
+        if (message != null) {
+            messageTD.attributes().title(message);
+            messageTD.append().text(message.substring(0, Math.min(message.length(), 200)));
+        }
+    }
+
+    private void appendButtons(@NotNull Parameters parameters, @NotNull HtmlContentBuilder form) {
+        form.html("<input type=\"submit\" name=\"" + CodeReviewServlet.PARAM_REVIEW_SELECTED + "\" value=\"Review selected\">");
+        form.nbsp();
+        Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_REVIEW_SELECTED, "1");
+        for (RevisionModel revisionModel : revisionModels) {
+            if (!revisionModel.reviewed) {
+                link.withAdditionalParameter(CodeReviewServlet.PARAM_REVISIONS_TO_MARK, revisionModel.getKey());
+            }
+        }
+        HtmlTagBuilder reviewAll = form.tag().b().append().tag().a();
+        reviewAll.attributes().href(link.toHtmlLink());
+        reviewAll.attributes().onClick(refreshCall);
+        reviewAll.append().text("[ Review all ]");
+        if (parameters.isWorkflowActionConfigured()) {
+            form.nbsp();
+            HtmlTagBuilder reviewAllSuccess = form.tag().b().append().tag().a();
+            reviewAllSuccess.attributes().href(link.withWorkflowAction(WorkflowAction.successfulReview).toHtmlLink());
+            reviewAllSuccess.attributes().onClick(refreshCall);
+            reviewAllSuccess.append().text("[ Review all & advance ]");
+        }
     }
 
 }

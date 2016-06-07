@@ -115,7 +115,7 @@ public class CodeReviewServlet extends HttpServlet {
         }
 
         final Parameters parameters = new Parameters(request, Parameters.repositoryConfigurationLoader());
-        if (parameters.isInReviewStatus()) {
+        if (parameters.canReview()) {
             String currentUser = securityService.getCurrentUser();
             Revisions revisions = parameters.createRevisions();
             String reviewedRevisions = revisions.markReviewed(revisionsToMark, currentUser).getReviewedRevisionsFieldValue();
