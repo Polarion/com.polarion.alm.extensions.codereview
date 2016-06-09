@@ -108,6 +108,7 @@ reviewerRole=project_code_reviewer
 - `successfulReviewWorkflowAction` should contain the id of the workflow action which will be executed by "Review all & advance" action (this configuration is optional)
 - `successfulReviewResolution` should contain the id of the resolution option which will be set into Resolution field upon executing "Review all & advance" action if the workflow requires Resolution field to be filled (this configuration is optional)
 - `reviewerRole` should contain name of the role added to code reviewers
+- `pastReviewers` should contain space-separated ids of users who were reviewers in the past (this configuration is optional)
 
 This is how the Code Review Form Extension looks like:
 

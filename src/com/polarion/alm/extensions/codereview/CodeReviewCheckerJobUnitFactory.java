@@ -358,6 +358,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             processedWIs.add(wi);
             boolean needsReview = false;
             Parameters parameters = new Parameters(wi, configurationLoader);
+            Revisions revisions = parameters.createRevisions();
             if (wi.getResolution() == null) {
                 if (parameters.unresolvedWorkItemWithRevisionsNeedsTimePoint()) {
                     if (wi.getTimePoint() == null) {
@@ -371,7 +372,14 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
                 }
             } else {
                 getLogger().info("      resolved " + wi.getId());
-                needsReview = parameters.createRevisions().hasRevisionsToReview();
+                if (revisions.hasRevisionsToReview()) {
+                    getLogger().info("      ... has revisions to review");
+                    needsReview = true;
+                }
+            }
+            if (revisions.hasRevisionsReviewedByNonReviewers(parameters)) {
+                getLogger().info("      ... has revisions reviewed by non-reviewers");
+                needsReview = true;
             }
             if (needsReview) {
                 getLogger().info("      ... needs to be reviewed again");

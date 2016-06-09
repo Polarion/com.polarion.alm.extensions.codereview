@@ -20,8 +20,11 @@ import java.io.InputStream;
 import java.security.PrivilegedExceptionAction;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -79,6 +82,7 @@ public class Parameters {
     private static final String CONFIG_FAST_TRACK_REVIEWER = "fastTrackReviewer";
     private static final String CONFIG_UNRESOLVED_WORK_ITEM_WITH_REVISIONS_NEEDS_TIMEPOINT = "unresolvedWorkItemWithRevisionsNeedsTimePoint";
     private static final String CONFIG_REVIEWER_ROLE = "reviewerRole";
+    private static final String CONFIG_PAST_REVIEWERS = "pastReviewers";
 
     public static enum WorkflowAction {
         successfulReview;
@@ -99,6 +103,7 @@ public class Parameters {
     private final @Nullable String fastTrackReviewer;
     private final boolean unresolvedWorkItemWithRevisionsNeedsTimePoint;
     private final @Nullable String reviewerRole;
+    private final @NotNull Collection<String> pastReviewers;
 
     private Parameters(@NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction, @NotNull Function<IWorkItem, Properties> configurationLoader) {
         super();
@@ -118,6 +123,12 @@ public class Parameters {
         fastTrackReviewer = configuration.getProperty(CONFIG_FAST_TRACK_REVIEWER);
         unresolvedWorkItemWithRevisionsNeedsTimePoint = Boolean.parseBoolean(configuration.getProperty(CONFIG_UNRESOLVED_WORK_ITEM_WITH_REVISIONS_NEEDS_TIMEPOINT));
         reviewerRole = configuration.getProperty(CONFIG_REVIEWER_ROLE);
+        String pastReviewersString = configuration.getProperty(CONFIG_PAST_REVIEWERS);
+        if (pastReviewersString != null) {
+            pastReviewers = new HashSet(Arrays.asList(pastReviewersString.split("\\s+")));
+        } else {
+            pastReviewers = Collections.EMPTY_SET;
+        }
     }
 
     public static @NotNull Function<IWorkItem, Properties> repositoryConfigurationLoader() {
@@ -373,6 +384,23 @@ public class Parameters {
 
     public boolean canReview() {
         return isInReviewStatus() && hasReviewerRole();
+    }
+
+    public boolean isOrWasPermittedReviewer(@Nullable String user) {
+        if (user == null) {
+            return true;
+        }
+        if (reviewerRole == null) {
+            return true;
+        }
+        if (user.equals(fastTrackReviewer)) {
+            return true;
+        }
+        if (pastReviewers.contains(user)) {
+            return true;
+        }
+        Collection<String> rolesForUser = securityService.getRolesForUser(user, workItem.getContextId());
+        return rolesForUser.contains(reviewerRole);
     }
 
 }

@@ -196,6 +196,15 @@ public final class Revisions {
         return false;
     }
 
+    public boolean hasRevisionsReviewedByNonReviewers(@NotNull Parameters parameters) {
+        for (RevisionModel revisionModel : revisionModels) {
+            if (!parameters.isOrWasPermittedReviewer(revisionModel.reviewer)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean isEmpty() {
         return revisionModels.isEmpty();
     }
