@@ -381,6 +381,10 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
                 getLogger().info("      ... has revisions reviewed by non-reviewers");
                 needsReview = true;
             }
+            if (revisions.hasSelfReviewedRevisions(parameters)) {
+                getLogger().info("      ... has self-reviewed revisions");
+                needsReview = true;
+            }
             if (needsReview) {
                 getLogger().info("      ... needs to be reviewed again");
                 wisToBeReviewed.add(wi);

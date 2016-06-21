@@ -225,6 +225,18 @@ public final class Revisions {
         return false;
     }
 
+    public boolean hasSelfReviewedRevisions(@NotNull Parameters parameters) {
+        for (RevisionModel revisionModel : revisionModels) {
+            if (revisionModel.reviewed) {
+                UserIdentity userIdentity = parameters.identityForUser(revisionModel.reviewer);
+                if (revisionModel.isAuthoredByUser(userIdentity)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean isEmpty() {
         return revisionModels.isEmpty();
     }
