@@ -118,7 +118,7 @@ public class CodeReviewServlet extends HttpServlet {
         if (parameters.canReview()) {
             String currentUser = securityService.getCurrentUser();
             Revisions revisions = parameters.createRevisions();
-            String reviewedRevisions = revisions.markReviewed(revisionsToMark, currentUser).getReviewedRevisionsFieldValue();
+            String reviewedRevisions = revisions.markReviewed(revisionsToMark, currentUser, parameters).getReviewedRevisionsFieldValue();
             parameters.storeWorkItem(reviewedRevisions, currentUser, !revisions.hasRevisionsToReview());
         }
 

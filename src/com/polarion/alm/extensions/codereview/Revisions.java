@@ -95,6 +95,14 @@ public final class Revisions {
             return getKey() + ((reviewer != null) ? REVIEWER_DELIMITER + reviewer : "");
         }
 
+        public boolean isAuthoredByOneOfTheUsers(@NotNull Collection<String> users) {
+            String author = revision.getStringAuthor();
+            if (author == null) {
+                return false;
+            }
+            return users.contains(author);
+        }
+
     }
 
     public Revisions(@NotNull List<IRevision> linkedRevisions, @Nullable Integer lastReviewedRevision) {
@@ -126,9 +134,10 @@ public final class Revisions {
         }
     }
 
-    public @NotNull Revisions markReviewed(@NotNull Predicate<String> shouldMark, @NotNull String reviewer) {
+    public @NotNull Revisions markReviewed(@NotNull Predicate<String> shouldMark, @NotNull String reviewer, @NotNull Parameters parameters) {
+        Collection<String> possibleUserNames = parameters.getPossibleUserNames(reviewer);
         for (RevisionModel revisionModel : revisionModels) {
-            if (!revisionModel.reviewed && shouldMark.test(revisionModel.getKey())) {
+            if (!revisionModel.reviewed && shouldMark.test(revisionModel.getKey()) && !revisionModel.isAuthoredByOneOfTheUsers(possibleUserNames)) {
                 revisionModel.reviewed = true;
                 revisionModel.reviewer = reviewer;
             }
@@ -136,8 +145,8 @@ public final class Revisions {
         return this;
     }
 
-    public @NotNull Revisions markReviewed(@NotNull Collection<String> revisionsToMarkAsReviewed, @NotNull String reviewer) {
-        return markReviewed(revision -> revisionsToMarkAsReviewed.contains(revision), reviewer);
+    public @NotNull Revisions markReviewed(@NotNull Collection<String> revisionsToMarkAsReviewed, @NotNull String reviewer, @NotNull Parameters parameters) {
+        return markReviewed(revision -> revisionsToMarkAsReviewed.contains(revision), reviewer, parameters);
     }
 
     public @NotNull String getReviewedRevisionsFieldValue() {
@@ -199,6 +208,16 @@ public final class Revisions {
     public boolean hasRevisionsReviewedByNonReviewers(@NotNull Parameters parameters) {
         for (RevisionModel revisionModel : revisionModels) {
             if (!parameters.isOrWasPermittedReviewer(revisionModel.reviewer)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasRevisionsToReviewAuthoredByCurrentUser(@NotNull Parameters parameters) {
+        Collection<String> possibleUserNamesForCurrentUser = parameters.getPossibleUserNamesForCurrentUser();
+        for (RevisionModel revisionModel : revisionModels) {
+            if (!revisionModel.reviewed && revisionModel.isAuthoredByOneOfTheUsers(possibleUserNamesForCurrentUser)) {
                 return true;
             }
         }
@@ -294,7 +313,7 @@ public final class Revisions {
         reviewAll.attributes().href(link.toHtmlLink());
         reviewAll.attributes().onClick(refreshCall);
         reviewAll.append().text("[ Review all ]");
-        if (parameters.isWorkflowActionConfigured()) {
+        if (parameters.isWorkflowActionConfigured() && !hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
             form.nbsp();
             HtmlTagBuilder reviewAllSuccess = form.tag().b().append().tag().a();
             reviewAllSuccess.attributes().href(link.withWorkflowAction(WorkflowAction.successfulReview).toHtmlLink());

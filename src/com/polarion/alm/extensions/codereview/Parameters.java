@@ -42,6 +42,7 @@ import com.polarion.alm.shared.api.utils.links.HtmlLink;
 import com.polarion.alm.shared.api.utils.links.HtmlLinkFactory;
 import com.polarion.alm.tracker.ITrackerService;
 import com.polarion.alm.tracker.model.IStatusOpt;
+import com.polarion.alm.tracker.model.ITrackerUser;
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.alm.tracker.model.IWorkflowAction;
 import com.polarion.core.util.RunnableWEx;
@@ -401,6 +402,21 @@ public class Parameters {
         }
         Collection<String> rolesForUser = securityService.getRolesForUser(user, workItem.getContextId());
         return rolesForUser.contains(reviewerRole);
+    }
+
+    public @NotNull Collection<String> getPossibleUserNames(@Nullable String user) {
+        if (user == null) {
+            return Collections.EMPTY_LIST;
+        }
+        ITrackerUser trackerUser = trackerService.getTrackerUser(user);
+        if (trackerUser.isUnresolvable()) {
+            return Collections.singleton(user);
+        }
+        return Arrays.asList(user, trackerUser.getName());
+    }
+
+    public @NotNull Collection<String> getPossibleUserNamesForCurrentUser() {
+        return getPossibleUserNames(securityService.getCurrentUser());
     }
 
 }
