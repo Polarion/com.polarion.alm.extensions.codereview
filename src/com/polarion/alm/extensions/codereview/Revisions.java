@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.polarion.alm.extensions.codereview.Parameters.Link;
+import com.polarion.alm.extensions.codereview.Parameters.UserIdentity;
 import com.polarion.alm.extensions.codereview.Parameters.WorkflowAction;
 import com.polarion.alm.projects.IProjectService;
 import com.polarion.alm.shared.api.utils.html.HtmlContentBuilder;
@@ -95,12 +96,12 @@ public final class Revisions {
             return getKey() + ((reviewer != null) ? REVIEWER_DELIMITER + reviewer : "");
         }
 
-        public boolean isAuthoredByOneOfTheUsers(@NotNull Collection<String> users) {
+        public boolean isAuthoredByUser(@NotNull UserIdentity userIdentity) {
             String author = revision.getStringAuthor();
             if (author == null) {
                 return false;
             }
-            return users.contains(author);
+            return defaultRepository ? userIdentity.hasId(author) : userIdentity.hasIdOrName(author);
         }
 
     }
@@ -135,9 +136,9 @@ public final class Revisions {
     }
 
     public @NotNull Revisions markReviewed(@NotNull Predicate<String> shouldMark, @NotNull String reviewer, @NotNull Parameters parameters) {
-        Collection<String> possibleUserNames = parameters.getPossibleUserNames(reviewer);
+        UserIdentity userIdentity = parameters.identityForUser(reviewer);
         for (RevisionModel revisionModel : revisionModels) {
-            if (!revisionModel.reviewed && shouldMark.test(revisionModel.getKey()) && !revisionModel.isAuthoredByOneOfTheUsers(possibleUserNames)) {
+            if (!revisionModel.reviewed && shouldMark.test(revisionModel.getKey()) && !revisionModel.isAuthoredByUser(userIdentity)) {
                 revisionModel.reviewed = true;
                 revisionModel.reviewer = reviewer;
             }
@@ -215,9 +216,9 @@ public final class Revisions {
     }
 
     public boolean hasRevisionsToReviewAuthoredByCurrentUser(@NotNull Parameters parameters) {
-        Collection<String> possibleUserNamesForCurrentUser = parameters.getPossibleUserNamesForCurrentUser();
+        UserIdentity userIdentity = parameters.identityForCurrentUser();
         for (RevisionModel revisionModel : revisionModels) {
-            if (!revisionModel.reviewed && revisionModel.isAuthoredByOneOfTheUsers(possibleUserNamesForCurrentUser)) {
+            if (!revisionModel.reviewed && revisionModel.isAuthoredByUser(userIdentity)) {
                 return true;
             }
         }

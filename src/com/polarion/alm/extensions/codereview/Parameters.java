@@ -404,19 +404,43 @@ public class Parameters {
         return rolesForUser.contains(reviewerRole);
     }
 
-    public @NotNull Collection<String> getPossibleUserNames(@Nullable String user) {
-        if (user == null) {
-            return Collections.EMPTY_LIST;
+    public final static class UserIdentity {
+
+        private @Nullable String id = null;
+        private @Nullable String name = null;
+
+        UserIdentity(@Nullable String user) {
+            id = user;
+            if (user == null) {
+                return;
+            }
+            ITrackerUser trackerUser = trackerService.getTrackerUser(user);
+            if (trackerUser.isUnresolvable()) {
+                return;
+            }
+            name = trackerUser.getName();
         }
-        ITrackerUser trackerUser = trackerService.getTrackerUser(user);
-        if (trackerUser.isUnresolvable()) {
-            return Collections.singleton(user);
+
+        public boolean hasId(@NotNull String id) {
+            return id.equals(this.id);
         }
-        return Arrays.asList(user, trackerUser.getName());
+
+        public boolean hasName(@NotNull String name) {
+            return name.equals(this.name);
+        }
+
+        public boolean hasIdOrName(@NotNull String idOrName) {
+            return hasId(idOrName) || hasName(idOrName);
+        }
+
     }
 
-    public @NotNull Collection<String> getPossibleUserNamesForCurrentUser() {
-        return getPossibleUserNames(securityService.getCurrentUser());
+    public @NotNull UserIdentity identityForUser(@Nullable String user) {
+        return new UserIdentity(user);
+    }
+
+    public @NotNull UserIdentity identityForCurrentUser() {
+        return identityForUser(securityService.getCurrentUser());
     }
 
 }
