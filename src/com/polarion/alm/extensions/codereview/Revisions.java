@@ -44,9 +44,11 @@ import com.polarion.platform.service.repository.IRepositoryService;
 @SuppressWarnings("nls")
 public final class Revisions {
 
-    private static final @NotNull String REVIEWED_REVISIONS_DELIMITER = ",";
-    private static final @NotNull String REPOSITORY_AND_REVISION_DELIMITER = "/";
-    private static final @NotNull String REVIEWER_DELIMITER = "\\";
+    private static final char REVIEWED_REVISIONS_DELIMITER = ',';
+    private static final @NotNull String REVIEWED_REVISIONS_DELIMITER_REGEX = "\\s*" + REVIEWED_REVISIONS_DELIMITER + "\\s*";
+    private static final @NotNull String REVIEWED_REVISIONS_DELIMITER_OUTPUT = REVIEWED_REVISIONS_DELIMITER + " ";
+    private static final char REPOSITORY_AND_REVISION_DELIMITER = '/';
+    private static final char REVIEWER_DELIMITER = '\\';
 
     private final @NotNull List<RevisionModel> revisionModels = new ArrayList<>();
 
@@ -122,7 +124,7 @@ public final class Revisions {
 
     private void parseReviewedRevisions(@Nullable String s, @NotNull Map<String, String> reviewedRevisions) {
         if (s != null) {
-            for (String record : s.split(REVIEWED_REVISIONS_DELIMITER)) {
+            for (String record : s.split(REVIEWED_REVISIONS_DELIMITER_REGEX)) {
                 String key = record;
                 String reviewer = null;
                 int i = record.lastIndexOf(REVIEWER_DELIMITER);
@@ -151,7 +153,7 @@ public final class Revisions {
     }
 
     public @NotNull String getReviewedRevisionsFieldValue() {
-        StringJoiner value = new StringJoiner(REVIEWED_REVISIONS_DELIMITER);
+        StringJoiner value = new StringJoiner(REVIEWED_REVISIONS_DELIMITER_OUTPUT);
         for (RevisionModel revisionModel : revisionModels) {
             if (revisionModel.reviewed) {
                 value.add(revisionModel.getReviewedRevisionsRecord());
