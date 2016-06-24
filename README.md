@@ -137,6 +137,7 @@ some already-reviewed task? For that we offer a job which can be scheduled in gl
 			<repositoryName>codereviewdemo:codeReviewExtension</repositoryName>
 		</repositoryLocation>
 	</repositoryLocations>
+	<permittedItemsQuery>project:codereviewdemo AND type:(task issue)</permittedItemsQuery>
   </job>
 ```
 
@@ -146,6 +147,7 @@ receivers for the notification mail
  - the location in the default Subversion repository with `locationPath` pointing to the root of the code source tree (e.g. trunk or some branch)  and `revision` set to starting revision of the code review - useful if branch is created and you don’t want to go before the
 branch point (defaults to first revision of the `locationPath`); or
  - the external repository with `repositoryName` containing id of the external repository.
+- `permittedItemsQuery` should define query matching all Work Items which are permitted to have revisions from checked locations (this configuration is optional)
 
 Notification is sent when some revision is not linked at all or is linked to resolved item with this revision not listed as reviewed.
 

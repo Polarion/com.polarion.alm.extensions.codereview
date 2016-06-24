@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +78,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "notificationSender", "Notification Sender", stringType).setRequired(true));
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "notificationSubjectPrefix", "Notification Subject Prefix", stringType).setRequired(false));
         desc.addParameter(new LocationsJobParameter(desc.getRootParameterGroup(), "repositoryLocations", "Repository Locations").setRequired(true));
+        desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "permittedItemsQuery", "Permitted Items Query", stringType).setRequired(false));
         return desc;
     }
 
@@ -184,6 +186,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
         private /*@NotNull*/ String notificationSender;
         private @Nullable String notificationSubjectPrefix;
         private /*@NotNull*/ ILocation[] repositoryLocations;
+        private @Nullable String permittedItemsQuery;
 
         @Override
         public void activate() throws GenericJobException {
@@ -215,6 +218,10 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             this.repositoryLocations = repositoryLocations;
         }
 
+        public void setPermittedItemsQuery(@Nullable String permittedItemsQuery) {
+            this.permittedItemsQuery = permittedItemsQuery;
+        }
+
         @Override
         protected IJobStatus runInternal(IProgressMonitor progress) {
             try {
@@ -233,6 +240,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             getLogger().info("notification sender: " + notificationSender);
             getLogger().info("notification subject prefix: " + notificationSubjectPrefix);
             getLogger().info("repository locations: " + Arrays.asList(repositoryLocations));
+            getLogger().info("permitted items query: " + permittedItemsQuery);
 
             if (progress.isCanceled()) {
                 return;
@@ -241,11 +249,13 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             List<ITrackerRevision> orphanedRevisions = new ArrayList<>();
             Set<IWorkItem> processedWIs = new HashSet<>();
             Set<IWorkItem> wisToBeReviewed = new HashSet<>();
+            Predicate<IWorkItem> isForbiddenWorkItem = (permittedItemsQuery == null) ? (wi -> false)
+                    : (wi -> trackerService.queryWorkItems("(" + permittedItemsQuery + ") AND id:(" + wi.getProjectId() + "/" + wi.getId() + ")", null).isEmpty());
 
             try {
 
                 for (ILocation repositoryLocation : repositoryLocations) {
-                    processLocation(progress, repositoryLocation, orphanedRevisions, processedWIs, wisToBeReviewed);
+                    processLocation(progress, repositoryLocation, orphanedRevisions, processedWIs, wisToBeReviewed, isForbiddenWorkItem);
                 }
 
                 if (progress.isCanceled()) {
@@ -286,20 +296,20 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             }
         }
 
-        private void processLocation(@NotNull IProgressMonitor progress, @NotNull ILocation location, @NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed) {
+        private void processLocation(@NotNull IProgressMonitor progress, @NotNull ILocation location, @NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed, @NotNull Predicate<IWorkItem> isForbiddenWorkItem) {
             if (progress.isCanceled()) {
                 return;
             }
             getLogger().info("revisions for location " + location + ":");
 
             if (repoService.getRepository(location.getRepositoryName()) != null) {
-                processInternalLocation(progress, location, orphanedRevisions, processedWIs, wisToBeReviewed);
+                processInternalLocation(progress, location, orphanedRevisions, processedWIs, wisToBeReviewed, isForbiddenWorkItem);
             } else {
-                processExternalLocation(progress, location, orphanedRevisions, processedWIs, wisToBeReviewed);
+                processExternalLocation(progress, location, orphanedRevisions, processedWIs, wisToBeReviewed, isForbiddenWorkItem);
             }
         }
 
-        private void processInternalLocation(@NotNull IProgressMonitor progress, @NotNull ILocation location, @NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed) {
+        private void processInternalLocation(@NotNull IProgressMonitor progress, @NotNull ILocation location, @NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed, @NotNull Predicate<IWorkItem> isForbiddenWorkItem) {
             String startRevision = location.getRevision();
             if (startRevision == null) {
                 startRevision = repoService.getReadOnlyConnection(location).getFirstRevision(location);
@@ -313,10 +323,10 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             revisionsMetaData.stream()
                     .map(revisionMetaData -> dataService.getRevision(location.getRepositoryName(), revisionMetaData.getName()))
                     .map(revision -> trackerService.getTrackerRevision(revision))
-                    .forEach(trackerRevision -> processRevision(progress, trackerRevision, orphanedRevisions, processedWIs, wisToBeReviewed));
+                    .forEach(trackerRevision -> processRevision(progress, trackerRevision, orphanedRevisions, processedWIs, wisToBeReviewed, isForbiddenWorkItem));
         }
 
-        private void processExternalLocation(@NotNull IProgressMonitor progress, @NotNull ILocation location, @NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed) {
+        private void processExternalLocation(@NotNull IProgressMonitor progress, @NotNull ILocation location, @NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed, @NotNull Predicate<IWorkItem> isForbiddenWorkItem) {
             String repositoryName = location.getRepositoryName();
             IExternalRepository repository = externalRepositoryProviderRegistry.getRepositoryByUniqueId(repositoryName);
             if (repository == null) {
@@ -329,10 +339,10 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             List<IRevision> revisions = dataService.searchInstances(IRevision.PROTO, IRevision.KEY_REPOSITORY_NAME + ":\"" + repositoryName + "\"", IRevision.KEY_CREATED);
             revisions.stream()
                     .map(revision -> trackerService.getTrackerRevision(revision))
-                    .forEach(trackerRevision -> processRevision(progress, trackerRevision, orphanedRevisions, processedWIs, wisToBeReviewed));
+                    .forEach(trackerRevision -> processRevision(progress, trackerRevision, orphanedRevisions, processedWIs, wisToBeReviewed, isForbiddenWorkItem));
         }
 
-        private void processRevision(@NotNull IProgressMonitor progress, @NotNull ITrackerRevision revision, @NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed) {
+        private void processRevision(@NotNull IProgressMonitor progress, @NotNull ITrackerRevision revision, @NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed, @NotNull Predicate<IWorkItem> isForbiddenWorkItem) {
             if (progress.isCanceled()) {
                 return;
             }
@@ -343,11 +353,11 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
                 orphanedRevisions.add(revision);
             } else {
                 getLogger().info("  ... is linked to:");
-                wis.forEach(wi -> processWorkItem(progress, wi, processedWIs, wisToBeReviewed));
+                wis.forEach(wi -> processWorkItem(progress, wi, processedWIs, wisToBeReviewed, isForbiddenWorkItem));
             }
         }
 
-        private void processWorkItem(@NotNull IProgressMonitor progress, @NotNull IWorkItem wi, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed) {
+        private void processWorkItem(@NotNull IProgressMonitor progress, @NotNull IWorkItem wi, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed, @NotNull Predicate<IWorkItem> isForbiddenWorkItem) {
             if (progress.isCanceled()) {
                 return;
             }
@@ -357,33 +367,38 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             }
             processedWIs.add(wi);
             boolean needsReview = false;
-            Parameters parameters = new Parameters(wi, configurationLoader);
-            Revisions revisions = parameters.createRevisions();
-            if (wi.getResolution() == null) {
-                if (parameters.unresolvedWorkItemWithRevisionsNeedsTimePoint()) {
-                    if (wi.getTimePoint() == null) {
-                        getLogger().info("      unresolved " + wi.getId() + " without timepoint");
-                        needsReview = true;
+            if (isForbiddenWorkItem.test(wi)) {
+                getLogger().info("      forbidden " + wi.getId());
+                needsReview = true;
+            } else {
+                Parameters parameters = new Parameters(wi, configurationLoader);
+                Revisions revisions = parameters.createRevisions();
+                if (wi.getResolution() == null) {
+                    if (parameters.unresolvedWorkItemWithRevisionsNeedsTimePoint()) {
+                        if (wi.getTimePoint() == null) {
+                            getLogger().info("      unresolved " + wi.getId() + " without timepoint");
+                            needsReview = true;
+                        } else {
+                            getLogger().info("      unresolved " + wi.getId() + " with timepoint " + wi.getTimePoint().getName());
+                        }
                     } else {
-                        getLogger().info("      unresolved " + wi.getId() + " with timepoint " + wi.getTimePoint().getName());
+                        getLogger().info("      unresolved " + wi.getId());
                     }
                 } else {
-                    getLogger().info("      unresolved " + wi.getId());
+                    getLogger().info("      resolved " + wi.getId());
+                    if (revisions.hasRevisionsToReview()) {
+                        getLogger().info("      ... has revisions to review");
+                        needsReview = true;
+                    }
                 }
-            } else {
-                getLogger().info("      resolved " + wi.getId());
-                if (revisions.hasRevisionsToReview()) {
-                    getLogger().info("      ... has revisions to review");
+                if (revisions.hasRevisionsReviewedByNonReviewers(parameters)) {
+                    getLogger().info("      ... has revisions reviewed by non-reviewers");
                     needsReview = true;
                 }
-            }
-            if (revisions.hasRevisionsReviewedByNonReviewers(parameters)) {
-                getLogger().info("      ... has revisions reviewed by non-reviewers");
-                needsReview = true;
-            }
-            if (revisions.hasSelfReviewedRevisions(parameters)) {
-                getLogger().info("      ... has self-reviewed revisions");
-                needsReview = true;
+                if (revisions.hasSelfReviewedRevisions(parameters)) {
+                    getLogger().info("      ... has self-reviewed revisions");
+                    needsReview = true;
+                }
             }
             if (needsReview) {
                 getLogger().info("      ... needs to be reviewed again");
