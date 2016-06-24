@@ -409,12 +409,12 @@ public class Parameters {
         private @Nullable String id = null;
         private @Nullable String name = null;
 
-        UserIdentity(@Nullable String user) {
-            id = user;
-            if (user == null) {
+        UserIdentity(@Nullable String id) {
+            if (id == null) {
                 return;
             }
-            ITrackerUser trackerUser = trackerService.getTrackerUser(user);
+            this.id = id;
+            ITrackerUser trackerUser = trackerService.getTrackerUser(id);
             if (trackerUser.isUnresolvable()) {
                 return;
             }
