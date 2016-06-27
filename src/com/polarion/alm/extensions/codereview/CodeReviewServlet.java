@@ -427,6 +427,8 @@ public class CodeReviewServlet extends HttpServlet {
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
                 appendHTMLContent(builder, connection, changeLocationTo, true);
+            } else {
+                appendNotTextFileWarning(builder);
             }
         } else if (metaData.isRemoved()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
@@ -435,6 +437,8 @@ public class CodeReviewServlet extends HttpServlet {
             appendFileInfoLite(fileInfo.append(), previousState, metaData, revision);
             if (isValidFileForCompare(previousState, connection)) {
                 appendHTMLContent(builder, connection, previousState, false);
+            } else {
+                appendNotTextFileWarning(builder);
             }
         } else if (metaData.isModified()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
@@ -443,6 +447,8 @@ public class CodeReviewServlet extends HttpServlet {
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
                 new FileCompareRenderer(connection, builder).append(previousState, changeLocationTo);
+            } else {
+                appendNotTextFileWarning(builder);
             }
         }
     }
@@ -456,6 +462,8 @@ public class CodeReviewServlet extends HttpServlet {
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
                 appendHTMLContent(builder, connection, changeLocationTo, true);
+            } else {
+                appendNotTextFileWarning(builder);
             }
         } else if (metaData.isRemoved()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
@@ -464,6 +472,8 @@ public class CodeReviewServlet extends HttpServlet {
             appendFileInfoLite(fileInfo.append(), previousState, metaData, revision);
             if (isValidFileForCompare(previousState, connection)) {
                 appendHTMLContent(builder, connection, previousState, false);
+            } else {
+                appendNotTextFileWarning(builder);
             }
         } else if (metaData.isModified()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
@@ -472,8 +482,14 @@ public class CodeReviewServlet extends HttpServlet {
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
                 new FileCompareRenderer(connection, builder).append(previousState, changeLocationTo);
+            } else {
+                appendNotTextFileWarning(builder);
             }
         }
+    }
+
+    private void appendNotTextFileWarning(HtmlContentBuilder builder) {
+        builder.tag().div().append().text("This is not a text file.");
     }
 
     private boolean isValidFileForCompare(@NotNull ILocation location, @NotNull IRepositoryReadOnlyConnection connection) {
@@ -481,7 +497,11 @@ public class CodeReviewServlet extends HttpServlet {
             return false;
         }
         String fileName = location.getLastComponent().toLowerCase();
-        return fileExtension.matcher(fileName).find() || "readme".equalsIgnoreCase(fileName);
+        if (fileExtension.matcher(fileName).find() || "readme".equalsIgnoreCase(fileName)) {
+            return true;
+        }
+        String mimeType = connection.getProperty(location, "svn:mime-type");
+        return (mimeType != null) && mimeType.startsWith("text/");
     }
 
     private void appendFileInfo(@NotNull HtmlContentBuilder builder, @NotNull ILocation changeLocationTo, @NotNull ILocationChangeMetaData metaData, @NotNull IRevision revision) {
