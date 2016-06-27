@@ -204,7 +204,11 @@ public class Parameters {
         if (lastReviewedRevisionValue instanceof Integer) {
             lastReviewedRevision = (Integer) lastReviewedRevisionValue;
         } else if (lastReviewedRevisionValue instanceof String) {
-            lastReviewedRevision = Integer.valueOf((String) lastReviewedRevisionValue);
+            try {
+                lastReviewedRevision = Integer.valueOf((String) lastReviewedRevisionValue);
+            } catch (NumberFormatException e) {
+                // ignored
+            }
         }
         return lastReviewedRevision;
     }
