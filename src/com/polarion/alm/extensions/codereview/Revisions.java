@@ -124,7 +124,7 @@ public final class Revisions {
 
     private void parseReviewedRevisions(@Nullable String s, @NotNull Map<String, String> reviewedRevisions) {
         if (s != null) {
-            for (String record : s.split(REVIEWED_REVISIONS_DELIMITER_REGEX)) {
+            for (String record : s.trim().split(REVIEWED_REVISIONS_DELIMITER_REGEX)) {
                 String key = record;
                 String reviewer = null;
                 int i = record.lastIndexOf(REVIEWER_DELIMITER);
