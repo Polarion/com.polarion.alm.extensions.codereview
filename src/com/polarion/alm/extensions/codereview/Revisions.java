@@ -287,6 +287,9 @@ public final class Revisions {
         for (RevisionModel revisionModel : revisionModels) {
             appendRevisionRow(table, canReview, revisionModel);
         }
+        if (parameters.mustStartReview()) {
+            appendStartReviewButton(parameters, form);
+        }
         if (canReview) {
             appendButtons(parameters, form);
         }
@@ -337,4 +340,11 @@ public final class Revisions {
         }
     }
 
+    private void appendStartReviewButton(@NotNull Parameters parameters, @NotNull HtmlContentBuilder form) {
+        Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_SET_CURRENT_REVIEWER, "1");
+        HtmlTagBuilder startReview = form.tag().b().append().tag().a();
+        startReview.attributes().href(link.toHtmlLink());
+        startReview.attributes().onClick(refreshCall);
+        startReview.append().text("[ Start review ]");
+    }
 }

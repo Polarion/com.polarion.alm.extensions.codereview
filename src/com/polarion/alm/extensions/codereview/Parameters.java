@@ -49,6 +49,7 @@ import com.polarion.core.util.RunnableWEx;
 import com.polarion.platform.TransactionExecuter;
 import com.polarion.platform.context.IContextService;
 import com.polarion.platform.core.PlatformContext;
+import com.polarion.platform.persistence.IEnumOption;
 import com.polarion.platform.persistence.model.IPObjectList;
 import com.polarion.platform.security.ISecurityService;
 import com.polarion.platform.service.repository.IRepositoryService;
@@ -84,6 +85,7 @@ public class Parameters {
     private static final String CONFIG_UNRESOLVED_WORK_ITEM_WITH_REVISIONS_NEEDS_TIMEPOINT = "unresolvedWorkItemWithRevisionsNeedsTimePoint";
     private static final String CONFIG_REVIEWER_ROLE = "reviewerRole";
     private static final String CONFIG_PAST_REVIEWERS = "pastReviewers";
+    private static final String CONFIG_PREVENT_REVIEW_CONFLICTS = "preventReviewConflicts";
 
     public static enum WorkflowAction {
         successfulReview;
@@ -105,6 +107,7 @@ public class Parameters {
     private final boolean unresolvedWorkItemWithRevisionsNeedsTimePoint;
     private final @Nullable String reviewerRole;
     private final @NotNull Collection<String> pastReviewers;
+    private final boolean preventReviewConflicts;
 
     private Parameters(@NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction, @NotNull Function<IWorkItem, Properties> configurationLoader) {
         super();
@@ -130,6 +133,7 @@ public class Parameters {
         } else {
             pastReviewers = Collections.EMPTY_SET;
         }
+        preventReviewConflicts = Boolean.parseBoolean(configuration.getProperty(CONFIG_PREVENT_REVIEW_CONFLICTS));
     }
 
     public static @NotNull Function<IWorkItem, Properties> repositoryConfigurationLoader() {
@@ -383,8 +387,37 @@ public class Parameters {
         return rolesForUser.contains(reviewerRole);
     }
 
-    public boolean canReview() {
+    private boolean canStartReview() {
         return isInReviewStatus() && hasReviewerRole();
+    }
+
+    public boolean mustStartReview() {
+        return canStartReview() && isCurrentReviewerEmptyAndNeedsToBeSet();
+    }
+
+    public boolean canReview() {
+        return canStartReview() && isCurrentUserSetAsCurrentReviewerOrDoesNotHaveTo();
+    }
+
+    private boolean isCurrentUserSetAsCurrentReviewerOrDoesNotHaveTo() {
+        if (reviewerField == null || !preventReviewConflicts) {
+            return true;
+        }
+        IEnumOption currentReviewerOption = (IEnumOption) workItem.getValue(reviewerField);
+        if (currentReviewerOption == null) {
+            return false;
+        }
+        String currentReviewer = currentReviewerOption.getId();
+        String currentUser = securityService.getCurrentUser();
+        return currentReviewer.equals(currentUser);
+    }
+
+    private boolean isCurrentReviewerEmptyAndNeedsToBeSet() {
+        if (reviewerField == null || !preventReviewConflicts) {
+            return false;
+        }
+        IEnumOption currentReviewerOption = (IEnumOption) workItem.getValue(reviewerField);
+        return currentReviewerOption == null;
     }
 
     public boolean isOrWasPermittedReviewer(@Nullable String user) {

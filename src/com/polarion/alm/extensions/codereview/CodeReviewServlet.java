@@ -79,6 +79,7 @@ public class CodeReviewServlet extends HttpServlet {
     static final String PARAM_ID = "id";
     static final String PARAM_REVIEW_SELECTED = "reviewSelected";
     static final String PARAM_REVISIONS_TO_MARK = "revisionsToMark";
+    static final String PARAM_SET_CURRENT_REVIEWER = "setCurrentReviewer";
 
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -99,6 +100,8 @@ public class CodeReviewServlet extends HttpServlet {
 
             if (request.getParameter(PARAM_REVIEW_SELECTED) != null) {
                 doReviewSelected(request, response);
+            } else if (request.getParameter(PARAM_SET_CURRENT_REVIEWER) != null) {
+                doSetCurrentReviewer(request, response);
             } else {
                 serveMain(request, response);
             }
@@ -122,6 +125,15 @@ public class CodeReviewServlet extends HttpServlet {
             parameters.storeWorkItem(reviewedRevisions, currentUser, !revisions.hasRevisionsToReview());
         }
 
+        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+    }
+
+    private void doSetCurrentReviewer(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
+        final Parameters parameters = new Parameters(request, Parameters.repositoryConfigurationLoader());
+        if (parameters.mustStartReview()) {
+            String currentUser = securityService.getCurrentUser();
+            parameters.storeWorkItem(null, currentUser, false);
+        }
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
