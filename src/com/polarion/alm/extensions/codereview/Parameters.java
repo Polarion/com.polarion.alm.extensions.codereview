@@ -120,7 +120,11 @@ public class Parameters {
         successfulReviewWorkflowAction = configuration.getProperty(CONFIG_SUCCESSFUL_REVIEW_WF_ACTION);
         successfulReviewResolution = configuration.getProperty(CONFIG_SUCCESSFUL_REVIEW_RESOLUTION);
         String fastTrackPermittedLocationPatternStr = configuration.getProperty(CONFIG_FAST_TRACK_PERMITTED_LOCATION_PATTERN);
-        fastTrackPermittedLocationPattern = Pattern.compile(fastTrackPermittedLocationPatternStr);
+        if (fastTrackPermittedLocationPatternStr != null) {
+            fastTrackPermittedLocationPattern = Pattern.compile(fastTrackPermittedLocationPatternStr);
+        } else {
+            fastTrackPermittedLocationPattern = null;
+        }
         fastTrackReviewer = configuration.getProperty(CONFIG_FAST_TRACK_REVIEWER);
         unresolvedWorkItemWithRevisionsNeedsTimePoint = Boolean.parseBoolean(configuration.getProperty(CONFIG_UNRESOLVED_WORK_ITEM_WITH_REVISIONS_NEEDS_TIMEPOINT));
         reviewerRole = configuration.getProperty(CONFIG_REVIEWER_ROLE);
