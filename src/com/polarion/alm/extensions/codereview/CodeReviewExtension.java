@@ -17,6 +17,7 @@ package com.polarion.alm.extensions.codereview;
 
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import com.polarion.alm.shared.api.SharedContext;
@@ -31,6 +32,8 @@ import com.polarion.platform.persistence.model.IPObject;
 public class CodeReviewExtension implements IFormExtension {
 
     public static final String ID = "codereview";
+
+    private static final Logger log = Logger.getLogger(CodeReviewExtension.class);
 
     @Override
     public String render(IPObject object, Map<String, String> attributes) {
@@ -62,6 +65,7 @@ public class CodeReviewExtension implements IFormExtension {
                 }
             }
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             builder.tag().div().append().tag().b().append().text("Uknown error - see server log for more information.");
         }
         builder.finished();

@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,8 +57,6 @@ import com.polarion.subterra.base.location.ILocation;
 
 @SuppressWarnings("nls")
 public class Parameters {
-
-    private static final Logger log = Logger.getLogger(Parameters.class);
 
     private static @NotNull IContextService contextService = PlatformContext.getPlatform().lookupService(IContextService.class);
     private static @NotNull IRepositoryService repositoryService = PlatformContext.getPlatform().lookupService(IRepositoryService.class);
@@ -169,8 +166,7 @@ public class Parameters {
             });
             return configuration;
         } catch (Exception e) {
-            log.error("Unexpected error occurred while reading from location " + location, e);
-            throw new RuntimeException(e);
+            throw new RuntimeException("Unexpected error occurred while reading from location " + location + ": " + e.getMessage(), e);
         }
     }
 
