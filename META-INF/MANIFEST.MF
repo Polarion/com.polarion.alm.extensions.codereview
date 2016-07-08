@@ -5,7 +5,7 @@ Require-Bundle: com.polarion.portal.tomcat,
  com.polarion.alm.tracker,
  com.polarion.platform.jobs
 Bundle-Vendor: Polarion Software
-Bundle-Version: 1.0.34
+Bundle-Version: 1.0.35
 Bundle-Name: Code Review Extension for Polarion ALM
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: com.polarion.alm.extensions.codereview;singleton:=true
