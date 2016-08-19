@@ -1,6 +1,6 @@
 # Code Review Extension for Polarion® ALM™
 
-Copyright (C) 2004-2016 Polarion Software  
+Copyright 2016 Polarion AG  
 TextDiffMatchPatch.java Copyright (C) 2012 Tine Kondo  
 TextDiffMatchPatch.java Copyright (C) 2006 Google Inc.  
 highlight.js Copyright (C) 2006 Ivan Sagalaev  
