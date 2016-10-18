@@ -354,6 +354,8 @@ public class CodeReviewServlet extends HttpServlet {
                 "<link rel=\"stylesheet\" href=\"/polarion/codereview/styles/styles.css\" type=\"text/css\">" +
                 " <script src=\"/polarion/codereview/highlight.pack.js\"></script>" +
                 " <script src=\"/polarion/codereview/script.js\"></script>" +
+                " <script src=\"/polarion/codereview/jquery-3.0.0.min.js\"></script>" +
+                " <script src=\"/polarion/codereview/sticky-kit.min.js\"></script>" +
                 "<link href=\"/polarion/codereview/styles/mono-blue.css\" rel=\"stylesheet\" type=\"text/css\">" +
                 "</head><body>" +
                 pageContent + "<script type=\"text/javascript\">hljs.initHighlightingOnLoad();</script>" + "</body></html>";
@@ -419,71 +421,73 @@ public class CodeReviewServlet extends HttpServlet {
     }
 
     private void processLocationMetaData(@NotNull HtmlContentBuilder builder, @NotNull IRepositoryReadOnlyConnection connection, @NotNull ILocationChangeMetaData metaData, @NotNull IRevision revision, @NotNull HtmlTagBuilder fileInfo) {
+        HtmlContentBuilder boxBuilder = builder.tag().div().append();
         if (metaData.isCopied() && (metaData.isRemoved() || metaData.isCreated())) {
             //rename?
         } else if (metaData.isCreated() || metaData.isCopied()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
-            appendFileInfo(builder, changeLocationTo, metaData, revision);
+            appendFileInfo(boxBuilder, changeLocationTo, metaData, revision);
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
-                appendHTMLContent(builder, connection, changeLocationTo, true);
+                appendHTMLContent(boxBuilder, connection, changeLocationTo, true);
             } else {
-                appendNotTextFileWarning(builder);
+                appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isRemoved()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
             ILocation previousState = getPreviousState(changeLocationTo);
-            appendFileInfo(builder, previousState, metaData, revision);
+            appendFileInfo(boxBuilder, previousState, metaData, revision);
             appendFileInfoLite(fileInfo.append(), previousState, metaData, revision);
             if (isValidFileForCompare(previousState, connection)) {
-                appendHTMLContent(builder, connection, previousState, false);
+                appendHTMLContent(boxBuilder, connection, previousState, false);
             } else {
-                appendNotTextFileWarning(builder);
+                appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isModified()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
             ILocation previousState = getPreviousState(changeLocationTo);
-            appendFileInfo(builder, changeLocationTo, metaData, revision);
+            appendFileInfo(boxBuilder, changeLocationTo, metaData, revision);
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
-                new FileCompareRenderer(connection, builder).append(previousState, changeLocationTo);
+                new FileCompareRenderer(connection, boxBuilder).append(previousState, changeLocationTo);
             } else {
-                appendNotTextFileWarning(builder);
+                appendNotTextFileWarning(boxBuilder);
             }
         }
     }
 
     private void processLocationMetaDataAggregated(@NotNull HtmlContentBuilder builder, @NotNull IRepositoryReadOnlyConnection connection, @NotNull ILocationChangeMetaData metaData, @NotNull IRevision revision, @NotNull List<IRevision> allRevisions, @NotNull HtmlTagBuilder fileInfo) {
+        HtmlContentBuilder boxBuilder = builder.tag().div().append();
         if (metaData.isCopied() && (metaData.isRemoved() || metaData.isCreated())) {
             //rename?
         } else if (metaData.isCreated() || metaData.isCopied()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
-            appendFileInfo(builder, changeLocationTo, metaData, revision);
+            appendFileInfo(boxBuilder, changeLocationTo, metaData, revision);
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
-                appendHTMLContent(builder, connection, changeLocationTo, true);
+                appendHTMLContent(boxBuilder, connection, changeLocationTo, true);
             } else {
-                appendNotTextFileWarning(builder);
+                appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isRemoved()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
             ILocation previousState = getPreviousState(changeLocationTo);
-            appendFileInfo(builder, previousState, metaData, revision);
+            appendFileInfo(boxBuilder, previousState, metaData, revision);
             appendFileInfoLite(fileInfo.append(), previousState, metaData, revision);
             if (isValidFileForCompare(previousState, connection)) {
-                appendHTMLContent(builder, connection, previousState, false);
+                appendHTMLContent(boxBuilder, connection, previousState, false);
             } else {
-                appendNotTextFileWarning(builder);
+                appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isModified()) {
             ILocation changeLocationTo = metaData.getChangeLocationTo();
             ILocation previousState = getFirstPrevState(metaData, allRevisions);
-            appendFileInfo(builder, changeLocationTo, metaData, revision);
+            appendFileInfo(boxBuilder, changeLocationTo, metaData, revision);
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
-                new FileCompareRenderer(connection, builder).append(previousState, changeLocationTo);
+                new FileCompareRenderer(connection, boxBuilder).append(previousState, changeLocationTo);
             } else {
-                appendNotTextFileWarning(builder);
+                appendNotTextFileWarning(boxBuilder);
             }
         }
     }

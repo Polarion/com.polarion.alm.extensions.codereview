@@ -2,6 +2,7 @@ var currentScroll = null;
 
 onload = function(){
 	renderNav();
+	$(".cr_file_label").stick_in_parent();
 };
 
 function renderNav() {
