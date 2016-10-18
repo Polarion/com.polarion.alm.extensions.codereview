@@ -1,0 +1,2 @@
+Library downloaded from https://github.com/leafo/sticky-kit
+License MIT
