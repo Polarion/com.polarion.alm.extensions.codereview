@@ -421,11 +421,15 @@ public class CodeReviewServlet extends HttpServlet {
     }
 
     private void processLocationMetaData(@NotNull HtmlContentBuilder builder, @NotNull IRepositoryReadOnlyConnection connection, @NotNull ILocationChangeMetaData metaData, @NotNull IRevision revision, @NotNull HtmlTagBuilder fileInfo) {
-        HtmlContentBuilder boxBuilder = builder.tag().div().append();
+        ILocation changeLocationTo = metaData.getChangeLocationTo();
+        HtmlTagBuilder div = builder.tag().div();
+        div.attributes().className("change");
+        div.attributes().id(createElementIdFromLocation(changeLocationTo));
+
+        HtmlContentBuilder boxBuilder = div.append();
         if (metaData.isCopied() && (metaData.isRemoved() || metaData.isCreated())) {
             //rename?
         } else if (metaData.isCreated() || metaData.isCopied()) {
-            ILocation changeLocationTo = metaData.getChangeLocationTo();
             appendFileInfo(boxBuilder, changeLocationTo, metaData, revision);
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
@@ -434,7 +438,6 @@ public class CodeReviewServlet extends HttpServlet {
                 appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isRemoved()) {
-            ILocation changeLocationTo = metaData.getChangeLocationTo();
             ILocation previousState = getPreviousState(changeLocationTo);
             appendFileInfo(boxBuilder, previousState, metaData, revision);
             appendFileInfoLite(fileInfo.append(), previousState, metaData, revision);
@@ -444,7 +447,6 @@ public class CodeReviewServlet extends HttpServlet {
                 appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isModified()) {
-            ILocation changeLocationTo = metaData.getChangeLocationTo();
             ILocation previousState = getPreviousState(changeLocationTo);
             appendFileInfo(boxBuilder, changeLocationTo, metaData, revision);
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
@@ -457,11 +459,15 @@ public class CodeReviewServlet extends HttpServlet {
     }
 
     private void processLocationMetaDataAggregated(@NotNull HtmlContentBuilder builder, @NotNull IRepositoryReadOnlyConnection connection, @NotNull ILocationChangeMetaData metaData, @NotNull IRevision revision, @NotNull List<IRevision> allRevisions, @NotNull HtmlTagBuilder fileInfo) {
-        HtmlContentBuilder boxBuilder = builder.tag().div().append();
+        ILocation changeLocationTo = metaData.getChangeLocationTo();
+        HtmlTagBuilder div = builder.tag().div();
+        div.attributes().className("change");
+        div.attributes().id(createElementIdFromLocation(changeLocationTo));
+
+        HtmlContentBuilder boxBuilder = div.append();
         if (metaData.isCopied() && (metaData.isRemoved() || metaData.isCreated())) {
             //rename?
         } else if (metaData.isCreated() || metaData.isCopied()) {
-            ILocation changeLocationTo = metaData.getChangeLocationTo();
             appendFileInfo(boxBuilder, changeLocationTo, metaData, revision);
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
             if (isValidFileForCompare(changeLocationTo, connection)) {
@@ -470,7 +476,6 @@ public class CodeReviewServlet extends HttpServlet {
                 appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isRemoved()) {
-            ILocation changeLocationTo = metaData.getChangeLocationTo();
             ILocation previousState = getPreviousState(changeLocationTo);
             appendFileInfo(boxBuilder, previousState, metaData, revision);
             appendFileInfoLite(fileInfo.append(), previousState, metaData, revision);
@@ -480,7 +485,6 @@ public class CodeReviewServlet extends HttpServlet {
                 appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isModified()) {
-            ILocation changeLocationTo = metaData.getChangeLocationTo();
             ILocation previousState = getFirstPrevState(metaData, allRevisions);
             appendFileInfo(boxBuilder, changeLocationTo, metaData, revision);
             appendFileInfoLite(fileInfo.append(), changeLocationTo, metaData, revision);
@@ -510,8 +514,7 @@ public class CodeReviewServlet extends HttpServlet {
 
     private void appendFileInfo(@NotNull HtmlContentBuilder builder, @NotNull ILocation changeLocationTo, @NotNull ILocationChangeMetaData metaData, @NotNull IRevision revision) {
         HtmlTagBuilder locationLabel = builder.tag().div();
-        locationLabel.attributes().id(changeLocationTo.serialize().replace("#", "_"));
-        locationLabel.attributes().className("cr_file_label change");
+        locationLabel.attributes().className("cr_file_label");
 
         Action action = ExternalRepositoryUtils.getAction(metaData);
         if (action != null) {
@@ -538,14 +541,18 @@ public class CodeReviewServlet extends HttpServlet {
         }
 
         HtmlTagBuilder fileLink = locationLabel.append().tag().a();
-        fileLink.attributes().href(HtmlLinkFactory.fromEncodedUrl("#" + changeLocationTo.serialize().replace("#", "_")));
-
+        fileLink.attributes().onClick("scrollTo('" + createElementIdFromLocation(changeLocationTo) + "')");
         fileLink.append().tag().span().append().text(changeLocationTo.getLastComponent());
         fileLink.append().text(" r.");
         fileLink.append().text(revision.getName());
         fileLink.append().text(" (");
         fileLink.append().text(changeLocationTo.getLocationPath());
         fileLink.append().text(")");
+    }
+
+    @NotNull
+    private String createElementIdFromLocation(@NotNull ILocation changeLocationTo) {
+        return changeLocationTo.serialize().replace("#", "_");
     }
 
     private @NotNull ILocation getPreviousState(@NotNull ILocation location) {
