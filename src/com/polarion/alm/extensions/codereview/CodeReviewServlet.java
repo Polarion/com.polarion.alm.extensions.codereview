@@ -438,11 +438,11 @@ public class CodeReviewServlet extends HttpServlet {
                 appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isRemoved()) {
-            ILocation previousState = getPreviousState(changeLocationTo);
-            appendFileInfo(boxBuilder, previousState, metaData, revision);
-            appendFileInfoLite(fileInfo.append(), previousState, metaData, revision);
-            if (isValidFileForCompare(previousState, connection)) {
-                appendHTMLContent(boxBuilder, connection, previousState, false);
+            ILocation previousStateLocation = getPreviousState(changeLocationTo);
+            appendFileInfo(boxBuilder, previousStateLocation, metaData, revision);
+            appendFileInfoLite(fileInfo.append(), previousStateLocation, metaData, revision);
+            if (isValidFileForCompare(previousStateLocation, connection)) {
+                appendHTMLContent(boxBuilder, connection, previousStateLocation, false);
             } else {
                 appendNotTextFileWarning(boxBuilder);
             }
@@ -569,14 +569,19 @@ public class CodeReviewServlet extends HttpServlet {
     }
 
     private void appendHTMLContent(@NotNull HtmlContentBuilder builder, @NotNull IRepositoryReadOnlyConnection connection, @NotNull ILocation location, boolean create) {
-        String content = getStringContent(connection, location);
-        HtmlTagBuilder compareContainer = builder.tag().div();
-        compareContainer.attributes().className("cr_file_content " + (create ? "cr_file_content_add" : "cr_file_content_delete"));
+        if (!create && !connection.exists(location)) {
+            builder.tag().div().append().text("File was removed during copy operation.");
+        } else {
+            String content = getStringContent(connection, location);
+            HtmlTagBuilder compareContainer = builder.tag().div();
+            compareContainer.attributes().className("cr_file_content " + (create ? "cr_file_content_add" : "cr_file_content_delete"));
 
-        HtmlTagBuilder pre = compareContainer.append().tag().pre();
-        HtmlTagBuilder code = pre.append().tag().byName("code");
-        appendStyle(location, code);
-        code.append().text(content);
+            HtmlTagBuilder pre = compareContainer.append().tag().pre();
+            HtmlTagBuilder code = pre.append().tag().byName("code");
+            appendStyle(location, code);
+            code.append().text(content);
+
+        }
     }
 
     static void appendStyle(@NotNull ILocation first, @NotNull HtmlTagBuilder code) {
