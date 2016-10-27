@@ -327,9 +327,18 @@ public final class Revisions {
                 link.withAdditionalParameter(CodeReviewServlet.PARAM_REVISIONS_TO_MARK, revisionModel.getKey());
             }
         }
+        HtmlTagBuilder hiddenLink = form.tag().b().append().tag().a();
+        hiddenLink.attributes().href(link.toHtmlLink());
+        hiddenLink.attributes().id("hiddenLink");
+        hiddenLink.attributes().style("display: none;");
+
         HtmlTagBuilder reviewAll = form.tag().b().append().tag().a();
-        reviewAll.attributes().href(link.toHtmlLink());
-        reviewAll.attributes().onClick(refreshCall);
+        reviewAll.attributes().href(HtmlLinkFactory.fromEncodedUrl("javascript:void(0)}"/*link.toHtmlLink()*/));
+        reviewAll.attributes().id("reviewAll");
+
+        reviewAll.attributes().onClick("(function () {var commentText = document.getElementById('commentText').value; var reviewAllLink = document.getElementById('reviewAll');"
+                + " reviewAllLink.href = document.getElementById('hiddenLink').href + '&reviewComment=' + escape(commentText); reviewAllLink.click();" + refreshCall + "}());");
+
         reviewAll.append().text("[ Review all ]");
         if (parameters.isWorkflowActionConfigured() && !hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
             form.nbsp();
@@ -338,6 +347,8 @@ public final class Revisions {
             reviewAllSuccess.attributes().onClick(refreshCall);
             reviewAllSuccess.append().text("[ Review all & advance ]");
         }
+        form.tag().br();
+        form.html("<textarea placeholder='Type your comment' id='commentText' rows='4' cols='120'></textarea>");
     }
 
     private void appendStartReviewButton(@NotNull Parameters parameters, @NotNull HtmlContentBuilder form) {

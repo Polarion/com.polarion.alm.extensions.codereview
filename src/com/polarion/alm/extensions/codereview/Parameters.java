@@ -40,11 +40,13 @@ import org.jetbrains.annotations.Nullable;
 import com.polarion.alm.shared.api.utils.links.HtmlLink;
 import com.polarion.alm.shared.api.utils.links.HtmlLinkFactory;
 import com.polarion.alm.tracker.ITrackerService;
+import com.polarion.alm.tracker.model.IComment;
 import com.polarion.alm.tracker.model.IStatusOpt;
 import com.polarion.alm.tracker.model.ITrackerUser;
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.alm.tracker.model.IWorkflowAction;
 import com.polarion.core.util.RunnableWEx;
+import com.polarion.core.util.types.Text;
 import com.polarion.platform.TransactionExecuter;
 import com.polarion.platform.context.IContextService;
 import com.polarion.platform.core.PlatformContext;
@@ -319,7 +321,7 @@ public class Parameters {
         }
     }
 
-    public @NotNull Parameters updateWorkItem(@Nullable String newReviewedRevisions, @Nullable String newReviewer, boolean permittedToPerformWFAction) {
+    public @NotNull Parameters updateWorkItem(@Nullable String newReviewedRevisions, @Nullable String newReviewer, boolean permittedToPerformWFAction, @Nullable String commentText) {
         if (newReviewedRevisions != null) {
             workItem.setValue(reviewedRevisionsField, newReviewedRevisions);
         }
@@ -333,14 +335,18 @@ public class Parameters {
                 break;
             }
         }
+        if (commentText != null && !commentText.isEmpty()) {
+            IComment comment = workItem.createComment(new Text(Text.TYPE_PLAIN, commentText), "Code review comment", null);
+            comment.save();
+        }
         return this;
     }
 
-    public @NotNull Parameters storeWorkItem(@Nullable final String newReviewedRevisions, @Nullable final String newReviewer, final boolean permittedToPerformWFAction) {
+    public @NotNull Parameters storeWorkItem(@Nullable final String newReviewedRevisions, @Nullable final String newReviewer, final boolean permittedToPerformWFAction, @Nullable String commentText) {
         TransactionExecuter.execute(new RunnableWEx<Void>() {
             @Override
             public Void runWEx() throws Exception {
-                updateWorkItem(newReviewedRevisions, newReviewer, permittedToPerformWFAction);
+                updateWorkItem(newReviewedRevisions, newReviewer, permittedToPerformWFAction, commentText);
                 workItem.save();
                 return null;
             }
