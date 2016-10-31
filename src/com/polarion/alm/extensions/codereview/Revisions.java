@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import com.polarion.alm.extensions.codereview.Parameters.Link;
 import com.polarion.alm.extensions.codereview.Parameters.UserIdentity;
-import com.polarion.alm.extensions.codereview.Parameters.WorkflowAction;
 import com.polarion.alm.projects.IProjectService;
 import com.polarion.alm.shared.api.utils.html.HtmlContentBuilder;
 import com.polarion.alm.shared.api.utils.html.HtmlFragmentBuilder;
@@ -333,20 +332,28 @@ public final class Revisions {
         hiddenLink.attributes().style("display: none;");
 
         HtmlTagBuilder reviewAll = form.tag().b().append().tag().a();
-        reviewAll.attributes().href(HtmlLinkFactory.fromEncodedUrl("javascript:void(0)}"/*link.toHtmlLink()*/));
-        reviewAll.attributes().id("reviewAll");
-
-        reviewAll.attributes().onClick("(function () {var commentText = document.getElementById('commentText').value; var reviewAllLink = document.getElementById('reviewAll');"
-                + " reviewAllLink.href = document.getElementById('hiddenLink').href + '&reviewComment=' + escape(commentText); reviewAllLink.click();" + refreshCall + "}());");
-
+        reviewAll.attributes().href(link.toHtmlLink());
+        reviewAll.attributes().onClick(refreshCall);
         reviewAll.append().text("[ Review all ]");
+
         if (parameters.isWorkflowActionConfigured() && !hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
             form.nbsp();
             HtmlTagBuilder reviewAllSuccess = form.tag().b().append().tag().a();
-            reviewAllSuccess.attributes().href(link.withWorkflowAction(WorkflowAction.successfulReview).toHtmlLink());
-            reviewAllSuccess.attributes().onClick(refreshCall);
+            reviewAllSuccess.attributes().id("reviewAllSuccess");
+            reviewAllSuccess.attributes().href(HtmlLinkFactory.fromEncodedUrl("javascript:void(0)}"));
+            reviewAllSuccess.attributes().onClick("(function () {var commentText = document.getElementById('commentText').value; var reviewAllSuccessLink = document.getElementById('reviewAllSuccess');"
+                    + " reviewAllSuccessLink.href = document.getElementById('hiddenLink').href + '&reviewComment=' + escape(commentText) + '&workflowAction=successfulReview'; reviewAllSuccessLink.click();" + refreshCall + "}());");
             reviewAllSuccess.append().text("[ Review all & advance ]");
         }
+        form.nbsp();
+
+        HtmlTagBuilder reviewAllReopen = form.tag().b().append().tag().a(); // add workflow action similar like from advance
+        reviewAllReopen.attributes().href(HtmlLinkFactory.fromEncodedUrl("javascript:void(0)}"));
+        reviewAllReopen.attributes().id("reviewAllReopen");
+        reviewAllReopen.attributes().onClick("(function () {var commentText = document.getElementById('commentText').value; var reviewAllReopenLink = document.getElementById('reviewAllReopen');"
+                + " reviewAllReopenLink.href = document.getElementById('hiddenLink').href + '&reviewComment=' + escape(commentText); reviewAllReopenLink.click();" + refreshCall + "}());");
+        reviewAllReopen.append().text("[ Review all & reopen]");
+
         form.tag().br();
         form.html("<textarea placeholder='Type your comment' id='commentText' rows='4' cols='120'></textarea>");
     }
