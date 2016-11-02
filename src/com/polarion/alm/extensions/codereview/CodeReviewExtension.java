@@ -63,7 +63,6 @@ public class CodeReviewExtension implements IFormExtension {
                     }
                     appendRevisionsTable(builder, revisions, parameters);
                 }
-                appendReviewAll(builder, revisions, parameters);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -71,11 +70,6 @@ public class CodeReviewExtension implements IFormExtension {
         }
         builder.finished();
         return builder.toString();
-    }
-
-    private void appendReviewAll(HtmlFragmentBuilder builder, Revisions revisions, Parameters parameters) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
     }
 
     private void appendSomethingWaiting(@NotNull HtmlFragmentBuilder builder, boolean comparableRevisionToReview, boolean nonDefaultRevisionsToReview, @NotNull Parameters parameters) {
