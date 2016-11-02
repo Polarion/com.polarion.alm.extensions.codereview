@@ -80,6 +80,7 @@ public class CodeReviewServlet extends HttpServlet {
     static final String PARAM_REVIEW_SELECTED = "reviewSelected";
     static final String PARAM_REVISIONS_TO_MARK = "revisionsToMark";
     static final String PARAM_SET_CURRENT_REVIEWER = "setCurrentReviewer";
+    static final String PARAM_REVIEW_COMMENT = "reviewComment";
 
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -122,7 +123,7 @@ public class CodeReviewServlet extends HttpServlet {
             String currentUser = securityService.getCurrentUser();
             Revisions revisions = parameters.createRevisions();
             String reviewedRevisions = revisions.markReviewed(revisionsToMark, currentUser, parameters).getReviewedRevisionsFieldValue();
-            parameters.storeWorkItem(reviewedRevisions, currentUser, !revisions.hasRevisionsToReview());
+            parameters.storeWorkItem(reviewedRevisions, currentUser, !revisions.hasRevisionsToReview(), request.getParameter(PARAM_REVIEW_COMMENT));
         }
 
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
@@ -132,7 +133,7 @@ public class CodeReviewServlet extends HttpServlet {
         final Parameters parameters = new Parameters(request, Parameters.repositoryConfigurationLoader());
         if (parameters.mustStartReview()) {
             String currentUser = securityService.getCurrentUser();
-            parameters.storeWorkItem(null, currentUser, false);
+            parameters.storeWorkItem(null, currentUser, false, null);
         }
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }

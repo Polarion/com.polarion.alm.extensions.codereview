@@ -40,11 +40,13 @@ import org.jetbrains.annotations.Nullable;
 import com.polarion.alm.shared.api.utils.links.HtmlLink;
 import com.polarion.alm.shared.api.utils.links.HtmlLinkFactory;
 import com.polarion.alm.tracker.ITrackerService;
+import com.polarion.alm.tracker.model.IComment;
 import com.polarion.alm.tracker.model.IStatusOpt;
 import com.polarion.alm.tracker.model.ITrackerUser;
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.alm.tracker.model.IWorkflowAction;
 import com.polarion.core.util.RunnableWEx;
+import com.polarion.core.util.types.Text;
 import com.polarion.platform.TransactionExecuter;
 import com.polarion.platform.context.IContextService;
 import com.polarion.platform.core.PlatformContext;
@@ -77,15 +79,19 @@ public class Parameters {
     private static final String CONFIG_IN_REVIEW_STATUS = "inReviewStatus";
     private static final String CONFIG_SUCCESSFUL_REVIEW_WF_ACTION = "successfulReviewWorkflowAction";
     private static final String CONFIG_SUCCESSFUL_REVIEW_RESOLUTION = "successfulReviewResolution";
+    private static final String CONFIG_UNSUCCESSFUL_REVIEW_WF_ACTION = "unsuccessfulReviewWorkflowAction";
     private static final String CONFIG_FAST_TRACK_PERMITTED_LOCATION_PATTERN = "fastTrackPermittedLocationPattern";
     private static final String CONFIG_FAST_TRACK_REVIEWER = "fastTrackReviewer";
     private static final String CONFIG_UNRESOLVED_WORK_ITEM_WITH_REVISIONS_NEEDS_TIMEPOINT = "unresolvedWorkItemWithRevisionsNeedsTimePoint";
     private static final String CONFIG_REVIEWER_ROLE = "reviewerRole";
     private static final String CONFIG_PAST_REVIEWERS = "pastReviewers";
     private static final String CONFIG_PREVENT_REVIEW_CONFLICTS = "preventReviewConflicts";
+    private static final String CONFIG_REVIEW_COMMENT_TITLE = "reviewCommentTitle";
+    private static final String CONFIG_SUCCESSFUL_REVIEW_COMMENT_TITLE = "successfulReviewCommentTitle";
+    private static final String CONFIG_UNSUCCESSFUL_REVIEW_COMMENT_TITLE = "unsuccessfulReviewCommentTitle";
 
     public static enum WorkflowAction {
-        successfulReview;
+        successfulReview, unsuccessfulReview;
     }
 
     private final @NotNull IWorkItem workItem;
@@ -99,8 +105,12 @@ public class Parameters {
     private final @Nullable String inReviewStatus;
     private final @Nullable String successfulReviewWorkflowAction;
     private final @Nullable String successfulReviewResolution;
+    private final @Nullable String unsuccessfulReviewWorkflowAction;
     private final @Nullable Pattern fastTrackPermittedLocationPattern;
     private final @Nullable String fastTrackReviewer;
+    private final @Nullable String successfulReviewCommentTitle;
+    private final @Nullable String unsuccessfulReviewCommentTitle;
+    private final @NotNull String reviewCommentTitle;
     private final boolean unresolvedWorkItemWithRevisionsNeedsTimePoint;
     private final @Nullable String reviewerRole;
     private final @NotNull Collection<String> pastReviewers;
@@ -119,6 +129,10 @@ public class Parameters {
         inReviewStatus = configuration.getProperty(CONFIG_IN_REVIEW_STATUS);
         successfulReviewWorkflowAction = configuration.getProperty(CONFIG_SUCCESSFUL_REVIEW_WF_ACTION);
         successfulReviewResolution = configuration.getProperty(CONFIG_SUCCESSFUL_REVIEW_RESOLUTION);
+        unsuccessfulReviewWorkflowAction = configuration.getProperty(CONFIG_UNSUCCESSFUL_REVIEW_WF_ACTION);
+        reviewCommentTitle = configuration.getProperty(CONFIG_REVIEW_COMMENT_TITLE);
+        successfulReviewCommentTitle = configuration.getProperty(CONFIG_SUCCESSFUL_REVIEW_COMMENT_TITLE);
+        unsuccessfulReviewCommentTitle = configuration.getProperty(CONFIG_UNSUCCESSFUL_REVIEW_COMMENT_TITLE);
         String fastTrackPermittedLocationPatternStr = configuration.getProperty(CONFIG_FAST_TRACK_PERMITTED_LOCATION_PATTERN);
         if (fastTrackPermittedLocationPatternStr != null) {
             fastTrackPermittedLocationPattern = Pattern.compile(fastTrackPermittedLocationPatternStr);
@@ -319,28 +333,38 @@ public class Parameters {
         }
     }
 
-    public @NotNull Parameters updateWorkItem(@Nullable String newReviewedRevisions, @Nullable String newReviewer, boolean permittedToPerformWFAction) {
+    public @NotNull Parameters updateWorkItem(@Nullable String newReviewedRevisions, @Nullable String newReviewer, boolean permittedToPerformWFAction, @Nullable String commentText) {
         if (newReviewedRevisions != null) {
             workItem.setValue(reviewedRevisionsField, newReviewedRevisions);
         }
         if (newReviewer != null) {
             workItem.setValue(reviewerField, workItem.getEnumerationOptionForField(reviewerField, newReviewer));
         }
+        String commentTitle = reviewCommentTitle;
         if (permittedToPerformWFAction && workflowAction != null) {
             switch (workflowAction) {
             case successfulReview:
+                commentTitle = successfulReviewCommentTitle != null ? successfulReviewCommentTitle : reviewCommentTitle;
                 performWFAction(Objects.requireNonNull(successfulReviewWorkflowAction));
                 break;
+            case unsuccessfulReview:
+                commentTitle = unsuccessfulReviewCommentTitle != null ? unsuccessfulReviewCommentTitle : reviewCommentTitle;
+                performWFAction(Objects.requireNonNull(unsuccessfulReviewWorkflowAction));
+                break;
             }
+        }
+        if (commentText != null && !commentText.isEmpty()) {
+            IComment comment = workItem.createComment(new Text(Text.TYPE_PLAIN, commentText), commentTitle, null);
+            comment.save();
         }
         return this;
     }
 
-    public @NotNull Parameters storeWorkItem(@Nullable final String newReviewedRevisions, @Nullable final String newReviewer, final boolean permittedToPerformWFAction) {
+    public @NotNull Parameters storeWorkItem(@Nullable final String newReviewedRevisions, @Nullable final String newReviewer, final boolean permittedToPerformWFAction, @Nullable String commentText) {
         TransactionExecuter.execute(new RunnableWEx<Void>() {
             @Override
             public Void runWEx() throws Exception {
-                updateWorkItem(newReviewedRevisions, newReviewer, permittedToPerformWFAction);
+                updateWorkItem(newReviewedRevisions, newReviewer, permittedToPerformWFAction, commentText);
                 workItem.save();
                 return null;
             }
@@ -359,8 +383,12 @@ public class Parameters {
         return false;
     }
 
-    public boolean isWorkflowActionConfigured() {
+    public boolean isSuccessfulWorkflowActionConfigured() {
         return successfulReviewWorkflowAction != null;
+    }
+
+    public boolean isUnsuccessfulWorkflowActionConfigured() {
+        return unsuccessfulReviewWorkflowAction != null;
     }
 
     public boolean isLocationPermittedForFastTrack(@NotNull ILocation location) {

@@ -99,18 +99,26 @@ reviewerField=codeReviewer
 inReviewStatus=awaiting-code-review
 successfulReviewWorkflowAction=mark_done
 successfulReviewResolution=fixed
+unsuccessfulReviewWorkflowAction=reopen
 reviewerRole=project_code_reviewer
 preventReviewConflicts=true
-```
+reviewCommentTitle=Review Comment
+successfulReviewCommentTitle=Successful Review Comment
+unsuccessfulReviewCommentTitle=Unsuccessful Review Comment
+``` 
 
 - `reviewedRevisionsField` should contain the id of the field listing reviewed revisions
 - `reviewerField` should contain the id of the field listing user doing the review
 - `inReviewStatus` should contain the id of the status for which the Code Review Form Extension allows to perform code review
 - `successfulReviewWorkflowAction` should contain the id of the workflow action which will be executed by "Review all & advance" action (this configuration is optional)
 - `successfulReviewResolution` should contain the id of the resolution option which will be set into Resolution field upon executing "Review all & advance" action if the workflow requires Resolution field to be filled (this configuration is optional)
+- `unsuccessfulReviewWorkflowAction` should contain the id of the workflow action which will be executed by "Review all & reopen" action (this configuration is optional) 
 - `reviewerRole` should contain name of the role added to code reviewers
 - `pastReviewers` should contain space-separated ids of users who were reviewers in the past (this configuration is optional)
 - `preventReviewConflicts` should be set to `true` if Code Review Form Extension should prevent reviews done by users which are not set in the `reviewerField` (this configuration is optional)
+- `reviewCommentTitle` Base comment title for all comments added from extension. (this configuration is optional, no comment title used instead)
+- `successfulReviewCommentTitle` Comment title when using Review All & advance button. (this configuration is optional, reviewCommentTitle used instead)
+- `unsuccessfulReviewCommentTitle` Comment title when using Review All & reopen button. (this configuration is optional, reviewCommentTitle used instead)
 
 This is how the Code Review Form Extension looks like:
 
@@ -119,6 +127,8 @@ This is how the Code Review Form Extension looks like:
 The "Open" action leads to the special compare view of all unreviewed changes. The "Open compare of all revisions from default repository" leads also to the special compare view, but this time it shows changes from all revisions. Both these actions are able to show only changes from default Subversion repository not from any external repository.
 
 The "Review selected" action will mark selected revisions as reviewed, "Review all" will mark all revisions as reviewed and "Review all & advance" will mark all revisions as reviewed and perform the configured workflow action.
+
+You can write comment, which will be automatically added when using all Review buttons (Selected, All, All & advance, All & reopen).
 
 If `preventReviewConflicts` is set then there might be an additional action "Start review" which will set current user as current reviewer.
 
