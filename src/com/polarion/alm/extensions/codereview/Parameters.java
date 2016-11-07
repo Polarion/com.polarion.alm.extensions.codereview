@@ -71,6 +71,7 @@ public class Parameters {
     private static final String PARAM_AGGREGATED_COMPARE = "aggregated";
     private static final String PARAM_COMPARE_ALL = "compareAll";
     private static final String PARAM_WORKFLOW_ACTION = "workflowAction";
+    private static final String PARAM_REVIEW_COMMENT = "reviewComment";
 
     // configuration parameters
     private static final String CONFIG_LAST_REVIEWED_REVISION_FIELD = "lastReviewedRevisionField";
@@ -110,13 +111,14 @@ public class Parameters {
     private final @Nullable String fastTrackReviewer;
     private final @Nullable String successfulReviewCommentTitle;
     private final @Nullable String unsuccessfulReviewCommentTitle;
-    private final @NotNull String reviewCommentTitle;
+    private final @Nullable String reviewCommentTitle;
+    private final @Nullable String commentText;
     private final boolean unresolvedWorkItemWithRevisionsNeedsTimePoint;
     private final @Nullable String reviewerRole;
     private final @NotNull Collection<String> pastReviewers;
     private final boolean preventReviewConflicts;
 
-    private Parameters(@NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction, @NotNull Function<IWorkItem, Properties> configurationLoader) {
+    private Parameters(@NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction, @Nullable String commentText, @NotNull Function<IWorkItem, Properties> configurationLoader) {
         super();
         this.workItem = workItem;
         this.aggregatedCompare = aggregatedCompare;
@@ -133,6 +135,7 @@ public class Parameters {
         reviewCommentTitle = configuration.getProperty(CONFIG_REVIEW_COMMENT_TITLE);
         successfulReviewCommentTitle = configuration.getProperty(CONFIG_SUCCESSFUL_REVIEW_COMMENT_TITLE);
         unsuccessfulReviewCommentTitle = configuration.getProperty(CONFIG_UNSUCCESSFUL_REVIEW_COMMENT_TITLE);
+        this.commentText = commentText;
         String fastTrackPermittedLocationPatternStr = configuration.getProperty(CONFIG_FAST_TRACK_PERMITTED_LOCATION_PATTERN);
         if (fastTrackPermittedLocationPatternStr != null) {
             fastTrackPermittedLocationPattern = Pattern.compile(fastTrackPermittedLocationPatternStr);
@@ -197,11 +200,11 @@ public class Parameters {
 
     public Parameters(@NotNull HttpServletRequest request, @NotNull Function<IWorkItem, Properties> configurationLoader) {
         this(trackerService.findWorkItem(request.getParameter(PARAM_PROJECT_ID), request.getParameter(PARAM_WORK_ITEM_ID)), Boolean.parseBoolean(request.getParameter(PARAM_AGGREGATED_COMPARE)),
-                Boolean.parseBoolean(request.getParameter(PARAM_COMPARE_ALL)), parseWorkflowAction(request.getParameter(PARAM_WORKFLOW_ACTION)), configurationLoader);
+                Boolean.parseBoolean(request.getParameter(PARAM_COMPARE_ALL)), parseWorkflowAction(request.getParameter(PARAM_WORKFLOW_ACTION)), request.getParameter(PARAM_REVIEW_COMMENT), configurationLoader);
     }
 
     public Parameters(@NotNull IWorkItem workItem, @NotNull Function<IWorkItem, Properties> configurationLoader) {
-        this(workItem, false, false, null, configurationLoader);
+        this(workItem, false, false, null, null, configurationLoader);
     }
 
     public @NotNull IWorkItem getWorkItem() {
@@ -333,7 +336,7 @@ public class Parameters {
         }
     }
 
-    public @NotNull Parameters updateWorkItem(@Nullable String newReviewedRevisions, @Nullable String newReviewer, boolean permittedToPerformWFAction, @Nullable String commentText) {
+    public @NotNull Parameters updateWorkItem(@Nullable String newReviewedRevisions, @Nullable String newReviewer, boolean permittedToPerformWFAction) {
         if (newReviewedRevisions != null) {
             workItem.setValue(reviewedRevisionsField, newReviewedRevisions);
         }
@@ -344,11 +347,11 @@ public class Parameters {
         if (permittedToPerformWFAction && workflowAction != null) {
             switch (workflowAction) {
             case successfulReview:
-                commentTitle = successfulReviewCommentTitle != null ? successfulReviewCommentTitle : reviewCommentTitle;
+                commentTitle = successfulReviewCommentTitle != null ? successfulReviewCommentTitle : "";
                 performWFAction(Objects.requireNonNull(successfulReviewWorkflowAction));
                 break;
             case unsuccessfulReview:
-                commentTitle = unsuccessfulReviewCommentTitle != null ? unsuccessfulReviewCommentTitle : reviewCommentTitle;
+                commentTitle = unsuccessfulReviewCommentTitle != null ? unsuccessfulReviewCommentTitle : "";
                 performWFAction(Objects.requireNonNull(unsuccessfulReviewWorkflowAction));
                 break;
             }
@@ -360,11 +363,11 @@ public class Parameters {
         return this;
     }
 
-    public @NotNull Parameters storeWorkItem(@Nullable final String newReviewedRevisions, @Nullable final String newReviewer, final boolean permittedToPerformWFAction, @Nullable String commentText) {
+    public @NotNull Parameters storeWorkItem(@Nullable final String newReviewedRevisions, @Nullable final String newReviewer, final boolean permittedToPerformWFAction) {
         TransactionExecuter.execute(new RunnableWEx<Void>() {
             @Override
             public Void runWEx() throws Exception {
-                updateWorkItem(newReviewedRevisions, newReviewer, permittedToPerformWFAction, commentText);
+                updateWorkItem(newReviewedRevisions, newReviewer, permittedToPerformWFAction);
                 workItem.save();
                 return null;
             }

@@ -31,7 +31,7 @@ public class FastTrackReviewFunction implements IFunction<IWorkItem> {
         Parameters parameters = new Parameters(context.getTarget(), Parameters.repositoryConfigurationLoader());
         Revisions revisions = parameters.createRevisions();
         String reviewedRevisions = revisions.markReviewed(x -> true, Objects.requireNonNull(parameters.getFastTrackReviewer()), parameters).getReviewedRevisionsFieldValue();
-        parameters.updateWorkItem(reviewedRevisions, parameters.getFastTrackReviewer(), false, null);
+        parameters.updateWorkItem(reviewedRevisions, parameters.getFastTrackReviewer(), false);
     }
 
 }
