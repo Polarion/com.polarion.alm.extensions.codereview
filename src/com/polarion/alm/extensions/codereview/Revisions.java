@@ -305,11 +305,9 @@ public final class Revisions {
             appendStartReviewButton(parameters, form);
         }
         if (canReview) {
-            if (!hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
-                appendButtons(parameters, form);
-                form.tag().br();
-                form.html("<textarea name='reviewComment' placeholder='Type your comment' id='" + COMMENT_TEXT_AREA_ID + "' style='display:none' rows='8' cols='140'></textarea>");
-            }
+            appendButtons(parameters, form);
+            form.tag().br();
+            form.html("<textarea name='reviewComment' placeholder='Type your comment' id='" + COMMENT_TEXT_AREA_ID + "' style='display:none' rows='8' cols='140'></textarea>");
         }
         form.html("</form>");
     }
@@ -347,7 +345,7 @@ public final class Revisions {
         }
         addButton(form, null, REVIEW_ALL_ID, "[ Review all ]", setupAllCall, null);
 
-        if (parameters.isSuccessfulWorkflowActionConfigured()) {
+        if (parameters.isSuccessfulWorkflowActionConfigured() && !hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
             addButton(form, null, REVIEW_ALL_ADVANCE_ID, "[ Review all & advance ]", setupSuccessfulCall, null);
         }
         if (parameters.isUnsuccessfulWorkflowActionConfigured()) {
