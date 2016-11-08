@@ -99,18 +99,26 @@ reviewerField=codeReviewer
 inReviewStatus=awaiting-code-review
 successfulReviewWorkflowAction=mark_done
 successfulReviewResolution=fixed
+unsuccessfulReviewWorkflowAction=reopen
 reviewerRole=project_code_reviewer
 preventReviewConflicts=true
-```
+reviewCommentTitle=Review Comment
+successfulReviewCommentTitle=Successful Review Comment
+unsuccessfulReviewCommentTitle=Unsuccessful Review Comment
+``` 
 
-- `reviewedRevisionsField` should contain the id of the field listing reviewed revisions
-- `reviewerField` should contain the id of the field listing user doing the review
-- `inReviewStatus` should contain the id of the status for which the Code Review Form Extension allows to perform code review
-- `successfulReviewWorkflowAction` should contain the id of the workflow action which will be executed by "Review all & advance" action (this configuration is optional)
-- `successfulReviewResolution` should contain the id of the resolution option which will be set into Resolution field upon executing "Review all & advance" action if the workflow requires Resolution field to be filled (this configuration is optional)
-- `reviewerRole` should contain name of the role added to code reviewers
-- `pastReviewers` should contain space-separated ids of users who were reviewers in the past (this configuration is optional)
-- `preventReviewConflicts` should be set to `true` if Code Review Form Extension should prevent reviews done by users which are not set in the `reviewerField` (this configuration is optional)
+- `reviewedRevisionsField` should contain the id of the field that lists the reviewed revisions.
+- `reviewerField` should contain the id of the field that lists the user doing the review.
+- `inReviewStatus` should contain the id of the “Status” that the Code Review Form Extension allows to perform the code review.
+- `successfulReviewWorkflowAction` should contain the id of the workflow action executed by the "Review all & advance" command. (This configuration is optional.)
+- `successfulReviewResolution` should contain the id of the resolution option that will populate the “Resolution” field when the "Review all & advance" command is executed and the workflow requires a value for the “Resolution” field. (This configuration is optional.)
+- `unsuccessfulReviewWorkflowAction` should contain the id of the workflow action executed by the "Review all & reopen" command. (This configuration is optional.)
+- `reviewerRole` should contain the name of the role added for code reviewers.
+- `pastReviewers` should contain the ids, (separated by spaces), of users who were reviewers in the past. (This configuration is optional.)
+- `preventReviewConflicts` should be set to `true` if the Code Review Form Extension should prevent reviews done by users that are not listed in the `reviewerField`. (This configuration is optional.)
+- `reviewCommentTitle` is the primary comment title used for all comments added via the extension. (This configuration is optional.) If it is not used, no comment title is displayed.
+- `successfulReviewCommentTitle`  is a comment’s title when the “Review all & advance” command is clicked. (This configuration is optional.) If it is not used, `reviewCommentTitle` is used instead.
+- `unsuccessfulReviewCommentTitle` is a comment’s title when the “Review all & reopen” command is clicked. (This configuration is optional). If is not used, `reviewCommentTitle` is used instead.
 
 This is how the Code Review Form Extension looks like:
 
@@ -119,6 +127,8 @@ This is how the Code Review Form Extension looks like:
 The "Open" action leads to the special compare view of all unreviewed changes. The "Open compare of all revisions from default repository" leads also to the special compare view, but this time it shows changes from all revisions. Both these actions are able to show only changes from default Subversion repository not from any external repository.
 
 The "Review selected" action will mark selected revisions as reviewed, "Review all" will mark all revisions as reviewed and "Review all & advance" will mark all revisions as reviewed and perform the configured workflow action.
+
+You can write comment, which will be automatically added when using all Review buttons (Selected, All, All & advance, All & reopen).
 
 If `preventReviewConflicts` is set then there might be an additional action "Start review" which will set current user as current reviewer.
 
