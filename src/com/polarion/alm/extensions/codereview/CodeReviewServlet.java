@@ -122,7 +122,7 @@ public class CodeReviewServlet extends HttpServlet {
             String currentUser = securityService.getCurrentUser();
             Revisions revisions = parameters.createRevisions();
             String reviewedRevisions = revisions.markReviewed(revisionsToMark, currentUser, parameters).getReviewedRevisionsFieldValue();
-            parameters.storeWorkItem(reviewedRevisions, currentUser, !revisions.hasRevisionsToReview());
+            parameters.updateWorkItemAndSaveInTX(reviewedRevisions, currentUser, !revisions.hasRevisionsToReview());
         }
 
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
@@ -132,7 +132,7 @@ public class CodeReviewServlet extends HttpServlet {
         final Parameters parameters = new Parameters(request, Parameters.repositoryConfigurationLoader());
         if (parameters.mustStartReview()) {
             String currentUser = securityService.getCurrentUser();
-            parameters.storeWorkItem(null, currentUser, false);
+            parameters.assignReviewerAndSaveInTX(currentUser);
         }
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }

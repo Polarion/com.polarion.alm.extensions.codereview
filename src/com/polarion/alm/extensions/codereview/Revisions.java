@@ -218,6 +218,10 @@ public final class Revisions {
 
     public boolean hasRevisionsToReviewAuthoredByCurrentUser(@NotNull Parameters parameters) {
         UserIdentity userIdentity = parameters.identityForCurrentUser();
+        return hasRevisionsToReviewAuthoredByUser(userIdentity);
+    }
+
+    public boolean hasRevisionsToReviewAuthoredByUser(@NotNull UserIdentity userIdentity) {
         for (RevisionModel revisionModel : revisionModels) {
             if (!revisionModel.reviewed && revisionModel.isAuthoredByUser(userIdentity)) {
                 return true;
@@ -370,4 +374,5 @@ public final class Revisions {
         Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_SET_CURRENT_REVIEWER, "1");
         addButton(form, link, "startReview", "[ Start review ]", refreshCall, null);
     }
+
 }

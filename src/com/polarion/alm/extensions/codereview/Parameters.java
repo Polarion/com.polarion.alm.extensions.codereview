@@ -321,18 +321,25 @@ public class Parameters {
         }
     }
 
-    private void performWFAction(@NotNull String actionName) {
+    private @Nullable IWorkflowAction getAvailableWorkflowAction(@NotNull String actionName) {
         IWorkflowAction[] availableActions = trackerService.getWorkflowManager().getAvailableActions(workItem);
         for (IWorkflowAction availableAction : availableActions) {
             if (actionName.equals(availableAction.getNativeActionId())) {
-                for (String requiredFeature : availableAction.getRequiredFeatures()) {
-                    if (IWorkItem.KEY_RESOLUTION.equals(requiredFeature) && successfulReviewResolution != null) {
-                        workItem.setEnumerationValue(IWorkItem.KEY_RESOLUTION, successfulReviewResolution);
-                    }
-                }
-                workItem.performAction(availableAction.getActionId());
-                return;
+                return availableAction;
             }
+        }
+        return null;
+    }
+
+    private void performWFAction(@NotNull String actionName) {
+        IWorkflowAction workflowAction = getAvailableWorkflowAction(actionName);
+        if (workflowAction != null) {
+            for (String requiredFeature : workflowAction.getRequiredFeatures()) {
+                if (IWorkItem.KEY_RESOLUTION.equals(requiredFeature) && successfulReviewResolution != null) {
+                    workItem.setEnumerationValue(IWorkItem.KEY_RESOLUTION, successfulReviewResolution);
+                }
+            }
+            workItem.performAction(workflowAction.getActionId());
         }
     }
 
@@ -363,15 +370,26 @@ public class Parameters {
         return this;
     }
 
-    public @NotNull Parameters storeWorkItem(@Nullable final String newReviewedRevisions, @Nullable final String newReviewer, final boolean permittedToPerformWFAction) {
-        TransactionExecuter.execute(new RunnableWEx<Void>() {
+    public @NotNull Parameters assignReviewerAndSave(@Nullable String reviewer) {
+        return updateWorkItemAndSave(null, reviewer, false);
+    }
+
+    public @NotNull Parameters assignReviewerAndSaveInTX(@Nullable String reviewer) {
+        return updateWorkItemAndSaveInTX(null, reviewer, false);
+    }
+
+    public @NotNull Parameters updateWorkItemAndSaveInTX(@Nullable final String newReviewedRevisions, @Nullable final String newReviewer, final boolean permittedToPerformWFAction) {
+        return TransactionExecuter.execute(new RunnableWEx<Parameters>() {
             @Override
-            public Void runWEx() throws Exception {
-                updateWorkItem(newReviewedRevisions, newReviewer, permittedToPerformWFAction);
-                workItem.save();
-                return null;
+            public Parameters runWEx() throws Exception {
+                return updateWorkItemAndSave(newReviewedRevisions, newReviewer, permittedToPerformWFAction);
             }
         });
+    }
+
+    private @NotNull Parameters updateWorkItemAndSave(@Nullable String newReviewedRevisions, @Nullable String newReviewer, boolean permittedToPerformWFAction) {
+        updateWorkItem(newReviewedRevisions, newReviewer, permittedToPerformWFAction);
+        workItem.save();
         return this;
     }
 
@@ -438,13 +456,17 @@ public class Parameters {
         if (reviewerField == null || !preventReviewConflicts) {
             return true;
         }
+        String currentUser = securityService.getCurrentUser();
+        return isUserSetAsCurrentReviewer(currentUser);
+    }
+
+    private boolean isUserSetAsCurrentReviewer(@Nullable String user) {
         IEnumOption currentReviewerOption = (IEnumOption) workItem.getValue(reviewerField);
         if (currentReviewerOption == null) {
             return false;
         }
         String currentReviewer = currentReviewerOption.getId();
-        String currentUser = securityService.getCurrentUser();
-        return currentReviewer.equals(currentUser);
+        return currentReviewer.equals(user);
     }
 
     private boolean isCurrentReviewerEmptyAndNeedsToBeSet() {
@@ -509,6 +531,23 @@ public class Parameters {
 
     public @NotNull UserIdentity identityForCurrentUser() {
         return identityForUser(securityService.getCurrentUser());
+    }
+
+    public boolean wasReviewWorkflowActionTriggered() {
+        if (inReviewStatus == null) {
+            return false;
+        }
+        String status = getEnumOptionId(workItem.getStatus());
+        @SuppressWarnings("deprecation")
+        String previousStatus = getEnumOptionId(workItem.getPreviousStatus());
+        if (Objects.equals(status, previousStatus)) {
+            return false;
+        }
+        return Objects.equals(previousStatus, inReviewStatus);
+    }
+
+    private @Nullable String getEnumOptionId(@Nullable IEnumOption enumOption) {
+        return (enumOption != null) ? enumOption.getId() : null;
     }
 
 }
