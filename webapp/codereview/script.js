@@ -2,6 +2,7 @@ var currentScroll = null;
 
 onload = function(){
 	renderNav();
+	$(".cr_file_label").stick_in_parent();
 };
 
 function renderNav() {
@@ -13,6 +14,18 @@ function renderNav() {
 	appendTop(navContainer);
 }
 
+function scrollTo(nodeId){
+	var elementToScroll = document.getElementById(nodeId);
+	var nodes = document.getElementsByClassName("change");
+	var index = Array.prototype.indexOf.call(nodes, elementToScroll);
+	currentScroll = nodes[index];
+	performScrollToElement(currentScroll);
+}
+
+function performScrollToElement(element){
+	$('html,body').animate({scrollTop: $(element).offset().top-40}, {duration:0});
+}
+
 function scrollNext() {
 	var scrollTop = document.body.scrollTop;
 	var nodes = document.getElementsByClassName("change");
@@ -22,7 +35,7 @@ function scrollNext() {
 	
 	if (startIndex < nodes.length && startIndex >=0) {
 		currentScroll = nodes[startIndex];
-		currentScroll.scrollIntoView(true);
+		performScrollToElement(currentScroll);
 		if (document.body.scrollTop == scrollTop) {
 			scrollNext();
 		}
@@ -38,7 +51,7 @@ function scrollPrev() {
 	
 	if (startIndex < nodes.length && startIndex >=0) {
 		currentScroll = nodes[startIndex];
-		currentScroll.scrollIntoView(true);
+		performScrollToElement(currentScroll);
 		if (document.body.scrollTop == scrollTop) {
 			scrollPrev();
 		}
