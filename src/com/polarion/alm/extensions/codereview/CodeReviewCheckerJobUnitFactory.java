@@ -15,6 +15,7 @@
  */
 package com.polarion.alm.extensions.codereview;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -421,7 +422,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             details.append("Orphaned revisions:\n\n");
             orphanedRevisions.forEach(revision -> {
                 details.append("<a href=\"");
-                details.append(System.getProperty("base.url"));
+                details.append(getRevisionViewAbsoluteURL(revision.getViewURL()));
                 details.append(revision.getViewURL());
                 details.append("\">");
                 details.append(revision.getName());
@@ -445,6 +446,19 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             });
 
             return "<html><body><b>Summary:</b><br/><br/>" + summary.toString() + "<br/><br/>\r\n" + "<b>Details:</b> <pre>" + details.toString() + "</pre></body></html>";
+        }
+
+        private @NotNull String getRevisionViewAbsoluteURL(@NotNull String url) {
+            URI uri = null;
+            try {
+                uri = new URI(url);
+            } catch (Exception e) {
+                //do nothing
+            }
+            if (uri != null && !uri.isAbsolute()) {
+                url = System.getProperty("base.url") + url;
+            }
+            return url;
         }
 
         private void sendNotification(@NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> wisToBeReviewed) {
