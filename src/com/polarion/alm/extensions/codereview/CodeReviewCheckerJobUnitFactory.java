@@ -448,17 +448,17 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             return "<html><body><b>Summary:</b><br/><br/>" + summary.toString() + "<br/><br/>\r\n" + "<b>Details:</b> <pre>" + details.toString() + "</pre></body></html>";
         }
 
-        private @NotNull String getRevisionViewAbsoluteURL(@NotNull String url) {
+        private @NotNull String getRevisionViewAbsoluteURL(@NotNull String viewUrl) {
             URI uri = null;
             try {
-                uri = new URI(url);
+                uri = new URI(viewUrl);
             } catch (Exception e) {
                 //do nothing
             }
             if (uri != null && !uri.isAbsolute()) {
-                url = System.getProperty("base.url") + url;
+                viewUrl = System.getProperty("base.url") + viewUrl;
             }
-            return url;
+            return viewUrl;
         }
 
         private void sendNotification(@NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> wisToBeReviewed) {
