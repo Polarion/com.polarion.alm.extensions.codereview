@@ -37,7 +37,7 @@ final class WorkItemWithHistoryImpl implements WorkItemWithHistory {
     }
 
     @Override
-    public void forEachChangeFromDate(@NotNull LocalDate date, @NotNull Consumer<WorkItemChange> action) {
+    public void forEachChangeFromNewestOnDate(@NotNull LocalDate date, @NotNull Consumer<WorkItemChange> action) {
         Iterator<IWorkItem> historyIterator = context.getHistoryOfWorkItemFromNewest(workItem);
         while (historyIterator.hasNext()) {
             IWorkItem historicalWI = historyIterator.next();

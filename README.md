@@ -4,8 +4,8 @@ Copyright 2016 Polarion AG
 TextDiffMatchPatch.java Copyright (C) 2012 Tine Kondo  
 TextDiffMatchPatch.java Copyright (C) 2006 Google Inc.  
 highlight.js Copyright (C) 2006 Ivan Sagalaev  
-jQuery v3.0.0 | (c) jQuery Foundation | jquery.org/license
-Sticky-kit v1.1.2 | MIT | Leaf Corcoran 2015 | http://leafo.net
+jQuery v3.0.0 Copyright jQuery Foundation and other contributors  
+Sticky-kit v1.1.2 by Leaf Corcoran  
 
 This Polarion® ALM™ extension provides ability to do code review through Polarion portal.
 

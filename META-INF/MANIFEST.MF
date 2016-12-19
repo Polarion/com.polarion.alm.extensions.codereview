@@ -13,4 +13,5 @@ Bundle-ClassPath: codeReviewExtension.jar,
  src/,
  META-INF/
 Guice-Modules: com.polarion.alm.extensions.codereview.CodeReviewExtensionModule
-Export-Package: com.polarion.alm.extensions.codereview
+Export-Package: com.polarion.alm.extensions.codereview,
+ com.polarion.alm.extensions.codereview.assigner

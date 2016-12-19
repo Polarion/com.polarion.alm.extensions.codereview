@@ -16,6 +16,7 @@
 package com.polarion.alm.extensions.codereview.assigner;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +63,29 @@ final class WorkItemChange {
     @Override
     public String toString() {
         return revisionName + " (" + changeDate + ") by " + changeAuthor;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((changeAuthor != null) ? changeAuthor.hashCode() : 0);
+        result = prime * result + ((changeDate != null) ? changeDate.hashCode() : 0);
+        result = prime * result + ((historicalWorkItem != null) ? historicalWorkItem.hashCode() : 0);
+        result = prime * result + revisionName.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof WorkItemChange)) {
+            return false;
+        }
+        WorkItemChange other = (WorkItemChange) obj;
+        return Objects.equals(changeAuthor, other.changeAuthor)
+                && Objects.equals(changeDate, other.changeDate)
+                && Objects.equals(historicalWorkItem, other.historicalWorkItem)
+                && Objects.equals(revisionName, other.revisionName);
     }
 
 }

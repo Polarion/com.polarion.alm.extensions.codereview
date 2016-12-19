@@ -15,12 +15,14 @@
  */
 package com.polarion.alm.extensions.codereview.assigner;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("nls")
 class ProbabilityMapImpl<T> implements ProbabilityMap<T> {
 
     private final @NotNull Map<T, Double> innerProbabilityMap;
@@ -30,21 +32,32 @@ class ProbabilityMapImpl<T> implements ProbabilityMap<T> {
     }
 
     private @NotNull Map<T, Double> convertFrequenciesToProbabilities(@NotNull Map<T, Integer> frequencies) {
+        if (frequencies.values().stream().anyMatch(frequency -> frequency < 0)) {
+            throw new IllegalArgumentException("Frequency less than zero supplied: " + frequencies);
+        }
+        frequencies = normalizeFrequencies(frequencies);
         int totalSum = frequencies.values().stream().mapToInt(Integer::intValue).sum();
         int numberOfKeys = frequencies.size();
-        return frequencies.entrySet().stream()
+        return frequencies.entrySet().stream().sequential()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        e -> calculateProbability(e.getValue(), totalSum, numberOfKeys)));
+                        e -> calculateProbability(e.getValue(), totalSum, numberOfKeys),
+                        (a, b) -> {
+                            throw new IllegalStateException("Duplicate frequency key");
+                        },
+                        LinkedHashMap::new));
+    }
+
+    private @NotNull Map<T, Integer> normalizeFrequencies(Map<T, Integer> frequencies) {
+        Map<T, Integer> normalizedFrequencies = new LinkedHashMap<>(frequencies);
+        normalizedFrequencies.replaceAll((key, value) -> value + 1);
+        return normalizedFrequencies;
     }
 
     private double calculateProbability(int frequency, int totalSum, int numberOfKeys) {
-        if (totalSum == 0) {
-            return (double) 1 / (double) numberOfKeys;
-        }
-        int invertedReviewsCount = totalSum - frequency;
-        int invertedTotalReviews = totalSum * (numberOfKeys - 1);
-        return (double) invertedReviewsCount / (double) invertedTotalReviews;
+        int invertedFrequency = totalSum - frequency;
+        int invertedTotalSum = totalSum * (numberOfKeys - 1);
+        return (double) invertedFrequency / (double) invertedTotalSum;
     }
 
     @Override
@@ -54,6 +67,9 @@ class ProbabilityMapImpl<T> implements ProbabilityMap<T> {
 
     @Override
     public @NotNull Optional<T> select(double targetProbability) {
+        if (targetProbability < 0 || targetProbability >= 1) {
+            throw new IllegalArgumentException("Invalid target probability: " + targetProbability);
+        }
         double accumulatedProbability = 0;
         T lastKey = null;
         for (Map.Entry<T, Double> innerProbabilityEntry : innerProbabilityMap.entrySet()) {

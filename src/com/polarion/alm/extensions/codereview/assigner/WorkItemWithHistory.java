@@ -22,6 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 interface WorkItemWithHistory {
 
-    void forEachChangeFromDate(@NotNull LocalDate date, @NotNull Consumer<WorkItemChange> action);
+    void forEachChangeFromNewestOnDate(@NotNull LocalDate date, @NotNull Consumer<WorkItemChange> action);
 
 }
