@@ -15,6 +15,7 @@
  */
 package com.polarion.alm.extensions.codereview.assigner;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +35,9 @@ class ProbabilityMapImpl<T> implements ProbabilityMap<T> {
     private @NotNull Map<T, Double> convertFrequenciesToProbabilities(@NotNull Map<T, Integer> frequencies) {
         if (frequencies.values().stream().anyMatch(frequency -> frequency < 0)) {
             throw new IllegalArgumentException("Frequency less than zero supplied: " + frequencies);
+        }
+        if (frequencies.size() == 1) {
+            return Collections.singletonMap(frequencies.keySet().iterator().next(), 1d);
         }
         frequencies = normalizeFrequencies(frequencies);
         int totalSum = frequencies.values().stream().mapToInt(Integer::intValue).sum();
