@@ -132,7 +132,7 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
                 Collection<IWorkItem> workItemsToBeReviewed = trackerService.queryWorkItems(toBeReviewedItemsQuery, null);
                 ReviewsCalculator reviewsCalculator = new ReviewsCalculatorImpl(LocalDate.now(), new JobReviewsCalculatorContext(), WorkItemWithHistoryImpl::new);
                 JobCodeReviewAssignerContext codeReviewAssignerContext = new JobCodeReviewAssignerContext();
-                CodeReviewAssigner codeReviewAssigner = new CodeReviewAssigner(reviewers, reviewedWorkItems, workItemsToBeReviewed, reviewsCalculator, codeReviewAssignerContext);
+                CodeReviewAssigner codeReviewAssigner = new CodeReviewAssigner(reviewers, reviewedWorkItems, workItemsToBeReviewed, reviewsCalculator, codeReviewAssignerContext, ProbabilityMapImpl::new);
                 codeReviewAssigner.execute();
                 return null;
             }

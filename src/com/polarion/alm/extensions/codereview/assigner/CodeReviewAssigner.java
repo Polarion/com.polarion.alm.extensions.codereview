@@ -18,6 +18,7 @@ package com.polarion.alm.extensions.codereview.assigner;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
@@ -32,14 +33,16 @@ public class CodeReviewAssigner {
     private final @NotNull Collection<IWorkItem> workItemsToBeReviewed;
     private final @NotNull ReviewsCalculator reviewsCalculator;
     private final @NotNull CodeReviewAssignerContext context;
+    private final @NotNull Function<Map<String, Integer>, ProbabilityMap> probabilityMapFactory;
 
-    CodeReviewAssigner(@NotNull Collection<String> targetReviewers, @NotNull Collection<IWorkItem> reviewedWorkItems, @NotNull Collection<IWorkItem> workItemsToBeReviewed, @NotNull ReviewsCalculator reviewsCalculator, @NotNull CodeReviewAssignerContext context) {
+    CodeReviewAssigner(@NotNull Collection<String> targetReviewers, @NotNull Collection<IWorkItem> reviewedWorkItems, @NotNull Collection<IWorkItem> workItemsToBeReviewed, @NotNull ReviewsCalculator reviewsCalculator, @NotNull CodeReviewAssignerContext context, @NotNull Function<Map<String, Integer>, ProbabilityMap> probabilityMapFactory) {
         super();
         this.targetReviewers = targetReviewers;
         this.reviewedWorkItems = reviewedWorkItems;
         this.workItemsToBeReviewed = workItemsToBeReviewed;
         this.reviewsCalculator = reviewsCalculator;
         this.context = context;
+        this.probabilityMapFactory = probabilityMapFactory;
     }
 
     public void execute() {
@@ -72,7 +75,7 @@ public class CodeReviewAssigner {
         try {
             context.log("Assigning reviewer for Work Item " + wi.getId());
             Map<String, Integer> reviewsPerPossibleReviewer = calculateReviewsPerPossibleReviewer(wi, reviewsPerReviewer);
-            ProbabilityMap<String> reviewProbabilityPerReviewer = new ProbabilityMapImpl<>(reviewsPerPossibleReviewer);
+            ProbabilityMap<String> reviewProbabilityPerReviewer = probabilityMapFactory.apply(reviewsPerPossibleReviewer);
             context.log("... review probability per reviewer " + reviewProbabilityPerReviewer);
             Optional<String> randomlySelectedReviewer = reviewProbabilityPerReviewer.selectRandomly();
             randomlySelectedReviewer.ifPresent(reviewer -> context.assignReviewerAndSave(wi, reviewer));
