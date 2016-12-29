@@ -55,7 +55,7 @@ public class FastTrackReviewCondition implements IWorkflowCondition<IWorkItem> {
     @Override
     @Nullable
     public String passesConditionWithFailureMessage(@NotNull ICallContext<IWorkItem> context, @NotNull IArguments arguments) {
-        return check(context.getTarget(), new Parameters(context.getTarget(), Parameters.repositoryConfigurationLoader()));
+        return check(context.getTarget(), new Parameters(PlatformParametersContext.createFromPlatform(), context.getTarget()));
     }
 
 }

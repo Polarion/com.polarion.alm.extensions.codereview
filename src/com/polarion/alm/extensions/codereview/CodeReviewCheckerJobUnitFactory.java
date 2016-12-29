@@ -23,9 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -37,6 +35,7 @@ import com.polarion.alm.tracker.model.ITrackerRevision;
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.platform.announce.Announcement;
 import com.polarion.platform.announce.IAnnouncerService;
+import com.polarion.platform.context.IContextService;
 import com.polarion.platform.jobs.GenericJobException;
 import com.polarion.platform.jobs.IJobDescriptor;
 import com.polarion.platform.jobs.IJobDescriptor.IJobParameterGroup;
@@ -56,6 +55,7 @@ import com.polarion.platform.persistence.IDataService;
 import com.polarion.platform.persistence.model.IRevision;
 import com.polarion.platform.repository.external.IExternalRepositoryProvider.IExternalRepository;
 import com.polarion.platform.repository.external.IExternalRepositoryProviderRegistry;
+import com.polarion.platform.security.ISecurityService;
 import com.polarion.platform.service.repository.IRepositoryService;
 import com.polarion.platform.service.repository.IRevisionMetaData;
 import com.polarion.subterra.base.location.ILocation;
@@ -155,6 +155,8 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
     private /*@NotNull*/ IRepositoryService repoService;
     private /*@NotNull*/ IAnnouncerService announcerService;
     private /*@NotNull*/ IExternalRepositoryProviderRegistry externalRepositoryProviderRegistry;
+    private /*@NotNull*/ ISecurityService securityService;
+    private /*@NotNull*/ IContextService contextService;
 
     public void setDataService(@NotNull IDataService dataService) {
         this.dataService = dataService;
@@ -176,13 +178,21 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
         this.externalRepositoryProviderRegistry = externalRepositoryProviderRegistry;
     }
 
+    public void setSecurityService(@NotNull ISecurityService securityService) {
+        this.securityService = securityService;
+    }
+
+    public void setContextService(@NotNull IContextService contextService) {
+        this.contextService = contextService;
+    }
+
     public final class CodeReviewCheckerJobUnit extends AbstractJobUnit {
 
         public CodeReviewCheckerJobUnit(String name, IJobUnitFactory creator) {
             super(name, creator);
         }
 
-        private final @NotNull Function<IWorkItem, Properties> configurationLoader = Parameters.perContextCachingConfigurationLoader(Parameters.repositoryConfigurationLoader());
+        private final @NotNull ParametersContext parametersContext = new PlatformParametersContext(securityService, trackerService, contextService, repoService);
         private /*@NotNull*/ String[] notificationReceivers;
         private /*@NotNull*/ String notificationSender;
         private @Nullable String notificationSubjectPrefix;
@@ -372,7 +382,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
                 getLogger().info("      forbidden " + wi.getId());
                 needsReview = true;
             } else {
-                Parameters parameters = new Parameters(wi, configurationLoader);
+                Parameters parameters = new Parameters(parametersContext, wi);
                 Revisions revisions = parameters.createRevisions();
                 if (wi.getResolution() == null) {
                     if (parameters.unresolvedWorkItemWithRevisionsNeedsTimePoint()) {

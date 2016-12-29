@@ -19,17 +19,18 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
-import java.util.function.Function;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.polarion.alm.extensions.codereview.Parameters;
+import com.polarion.alm.extensions.codereview.ParametersContext;
+import com.polarion.alm.extensions.codereview.PlatformParametersContext;
 import com.polarion.alm.tracker.ITrackerService;
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.core.util.RunnableWEx;
 import com.polarion.platform.TransactionExecuter;
+import com.polarion.platform.context.IContextService;
 import com.polarion.platform.jobs.GenericJobException;
 import com.polarion.platform.jobs.IJobStatus;
 import com.polarion.platform.jobs.IJobUnitFactory;
@@ -38,6 +39,7 @@ import com.polarion.platform.jobs.spi.AbstractJobUnit;
 import com.polarion.platform.persistence.IDataService;
 import com.polarion.platform.persistence.model.IRevision;
 import com.polarion.platform.security.ISecurityService;
+import com.polarion.platform.service.repository.IRepositoryService;
 
 @SuppressWarnings("nls")
 final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
@@ -46,13 +48,15 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         super(name, creator);
     }
 
-    private final @NotNull Function<IWorkItem, Properties> configurationLoader = Parameters.perContextCachingConfigurationLoader(Parameters.repositoryConfigurationLoader());
     private /*@NotNull*/ String reviewerRole;
     private /*@NotNull*/ String reviewedItemsQuery;
     private /*@NotNull*/ String toBeReviewedItemsQuery;
     private /*@NotNull*/ IDataService dataService;
     private /*@NotNull*/ ITrackerService trackerService;
     private /*@NotNull*/ ISecurityService securityService;
+    private /*@NotNull*/ IContextService contextService;
+    private /*@NotNull*/ IRepositoryService repositoryService;
+    private /*@NotNull*/ ParametersContext parametersContext;
 
     @Override
     public void activate() throws GenericJobException {
@@ -75,6 +79,13 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         if (securityService == null) {
             throw new GenericJobException("securityService is required");
         }
+        if (contextService == null) {
+            throw new GenericJobException("contextService is required");
+        }
+        if (repositoryService == null) {
+            throw new GenericJobException("repositoryService is required");
+        }
+        parametersContext = new PlatformParametersContext(securityService, trackerService, contextService, repositoryService);
     }
 
     public void setReviewerRole(@NotNull String reviewerRole) {
@@ -99,6 +110,14 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
 
     public void setSecurityService(@NotNull ISecurityService securityService) {
         this.securityService = securityService;
+    }
+
+    public void setContextService(@NotNull IContextService contextService) {
+        this.contextService = contextService;
+    }
+
+    public void setRepositoryService(@NotNull IRepositoryService repositoryService) {
+        this.repositoryService = repositoryService;
     }
 
     @Override
@@ -126,17 +145,22 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         TransactionExecuter.execute(new RunnableWEx<Void>() {
             @Override
             public Void runWEx() throws Exception {
-                Collection<String> reviewers = securityService.getUsersForContextRole(reviewerRole, getScope().getId());
-                getLogger().info("Reviewers to assign: " + reviewers);
-                Collection<IWorkItem> reviewedWorkItems = trackerService.queryWorkItems(reviewedItemsQuery, null);
-                Collection<IWorkItem> workItemsToBeReviewed = trackerService.queryWorkItems(toBeReviewedItemsQuery, null);
-                ReviewsCalculator reviewsCalculator = new ReviewsCalculatorImpl(LocalDate.now(), new JobReviewsCalculatorContext(), WorkItemWithHistoryImpl::new);
-                JobCodeReviewAssignerContext codeReviewAssignerContext = new JobCodeReviewAssignerContext();
-                CodeReviewAssigner codeReviewAssigner = new CodeReviewAssigner(reviewers, reviewedWorkItems, workItemsToBeReviewed, reviewsCalculator, codeReviewAssignerContext, ProbabilityMapImpl::new);
-                codeReviewAssigner.execute();
+                executeAssumingTX();
                 return null;
             }
         });
+    }
+
+    /* called by unit tests */
+    void executeAssumingTX() {
+        Collection<String> reviewers = securityService.getUsersForContextRole(reviewerRole, getScope().getId());
+        getLogger().info("Reviewers to assign: " + reviewers);
+        Collection<IWorkItem> reviewedWorkItems = trackerService.queryWorkItems(reviewedItemsQuery, null);
+        Collection<IWorkItem> workItemsToBeReviewed = trackerService.queryWorkItems(toBeReviewedItemsQuery, null);
+        ReviewsCalculator reviewsCalculator = new ReviewsCalculatorImpl(LocalDate.now(), new JobReviewsCalculatorContext(), WorkItemWithHistoryImpl::new);
+        JobCodeReviewAssignerContext codeReviewAssignerContext = new JobCodeReviewAssignerContext();
+        CodeReviewAssigner codeReviewAssigner = new CodeReviewAssigner(reviewers, reviewedWorkItems, workItemsToBeReviewed, reviewsCalculator, codeReviewAssignerContext, ProbabilityMapImpl::new);
+        codeReviewAssigner.execute();
     }
 
     private final class JobReviewsCalculatorContext implements ReviewsCalculatorContext {
@@ -169,7 +193,7 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
 
         @Override
         public boolean wasReviewWorkflowActionTriggered(@NotNull IWorkItem workItem) {
-            Parameters parameters = new Parameters(workItem, configurationLoader);
+            Parameters parameters = new Parameters(parametersContext, workItem);
             return parameters.wasReviewWorkflowActionTriggered();
         }
 
@@ -197,7 +221,7 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         }
 
         private @NotNull Parameters getParameters(@NotNull IWorkItem workItem) {
-            return new Parameters(workItem, configurationLoader);
+            return new Parameters(parametersContext, workItem);
         }
 
         @Override

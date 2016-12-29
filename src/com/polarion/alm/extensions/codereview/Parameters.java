@@ -15,21 +15,16 @@
  */
 package com.polarion.alm.extensions.codereview;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.PrivilegedExceptionAction;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
@@ -39,31 +34,19 @@ import org.jetbrains.annotations.Nullable;
 
 import com.polarion.alm.shared.api.utils.links.HtmlLink;
 import com.polarion.alm.shared.api.utils.links.HtmlLinkFactory;
-import com.polarion.alm.tracker.ITrackerService;
 import com.polarion.alm.tracker.model.IComment;
 import com.polarion.alm.tracker.model.IStatusOpt;
-import com.polarion.alm.tracker.model.ITrackerUser;
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.alm.tracker.model.IWorkflowAction;
 import com.polarion.core.util.RunnableWEx;
 import com.polarion.core.util.types.Text;
 import com.polarion.platform.TransactionExecuter;
-import com.polarion.platform.context.IContextService;
-import com.polarion.platform.core.PlatformContext;
 import com.polarion.platform.persistence.IEnumOption;
 import com.polarion.platform.persistence.model.IPObjectList;
-import com.polarion.platform.security.ISecurityService;
-import com.polarion.platform.service.repository.IRepositoryService;
-import com.polarion.subterra.base.data.identification.IContextId;
 import com.polarion.subterra.base.location.ILocation;
 
 @SuppressWarnings("nls")
 public class Parameters {
-
-    private static @NotNull IContextService contextService = PlatformContext.getPlatform().lookupService(IContextService.class);
-    private static @NotNull IRepositoryService repositoryService = PlatformContext.getPlatform().lookupService(IRepositoryService.class);
-    private static @NotNull ISecurityService securityService = PlatformContext.getPlatform().lookupService(ISecurityService.class);
-    private static @NotNull ITrackerService trackerService = PlatformContext.getPlatform().lookupService(ITrackerService.class);
 
     // URL parameters
     private static final String PARAM_WORK_ITEM_ID = CodeReviewServlet.PARAM_ID;
@@ -95,6 +78,8 @@ public class Parameters {
         successfulReview, unsuccessfulReview;
     }
 
+    private final @NotNull ParametersContext context;
+
     private final @NotNull IWorkItem workItem;
     private final boolean aggregatedCompare;
     private final boolean compareAll;
@@ -118,13 +103,14 @@ public class Parameters {
     private final @NotNull Collection<String> pastReviewers;
     private final boolean preventReviewConflicts;
 
-    private Parameters(@NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction, @Nullable String commentText, @NotNull Function<IWorkItem, Properties> configurationLoader) {
+    private Parameters(@NotNull ParametersContext context, @NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction, @Nullable String commentText) {
         super();
+        this.context = context;
         this.workItem = workItem;
         this.aggregatedCompare = aggregatedCompare;
         this.compareAll = compareAll;
         this.workflowAction = workflowAction;
-        Properties configuration = configurationLoader.apply(workItem);
+        Properties configuration = context.loadConfiguration(workItem);
         lastReviewedRevisionField = configuration.getProperty(CONFIG_LAST_REVIEWED_REVISION_FIELD);
         reviewedRevisionsField = configuration.getProperty(CONFIG_REVIEWED_REVISIONS_FIELD);
         reviewerField = configuration.getProperty(CONFIG_REVIEWER_FIELD);
@@ -154,43 +140,6 @@ public class Parameters {
         preventReviewConflicts = Boolean.parseBoolean(configuration.getProperty(CONFIG_PREVENT_REVIEW_CONFLICTS));
     }
 
-    public static @NotNull Function<IWorkItem, Properties> repositoryConfigurationLoader() {
-        return wi -> loadConfiguration(wi);
-    }
-
-    public static @NotNull Function<IWorkItem, Properties> perContextCachingConfigurationLoader(@NotNull Function<IWorkItem, Properties> loader) {
-        Map<IContextId, Properties> cache = new HashMap<>();
-        return wi -> {
-            IContextId contextId = wi.getContextId();
-            Properties properties = cache.get(contextId);
-            if (properties == null) {
-                properties = loader.apply(wi);
-                cache.put(contextId, properties);
-            }
-            return properties;
-        };
-    }
-
-    private static @NotNull Properties loadConfiguration(@NotNull IWorkItem workItem) {
-        ILocation location = contextService.getContextforId(workItem.getContextId()).getLocation();
-        try {
-            final Properties configuration = new Properties();
-            location = Objects.requireNonNull(location).append(".polarion/codereview/codereview.properties");
-            final ILocation f_location = location;
-            securityService.doAsSystemUser(new PrivilegedExceptionAction<Void>() {
-                @Override
-                public Void run() throws IOException {
-                    InputStream content = repositoryService.getReadOnlyConnection(f_location).getContent(f_location);
-                    configuration.load(content);
-                    return null;
-                }
-            });
-            return configuration;
-        } catch (Exception e) {
-            throw new RuntimeException("Unexpected error occurred while reading from location " + location + ": " + e.getMessage(), e);
-        }
-    }
-
     private static @Nullable WorkflowAction parseWorkflowAction(@Nullable String s) {
         if (s == null) {
             return null;
@@ -198,13 +147,13 @@ public class Parameters {
         return WorkflowAction.valueOf(s);
     }
 
-    public Parameters(@NotNull HttpServletRequest request, @NotNull Function<IWorkItem, Properties> configurationLoader) {
-        this(trackerService.findWorkItem(request.getParameter(PARAM_PROJECT_ID), request.getParameter(PARAM_WORK_ITEM_ID)), Boolean.parseBoolean(request.getParameter(PARAM_AGGREGATED_COMPARE)),
-                Boolean.parseBoolean(request.getParameter(PARAM_COMPARE_ALL)), parseWorkflowAction(request.getParameter(PARAM_WORKFLOW_ACTION)), request.getParameter(PARAM_REVIEW_COMMENT), configurationLoader);
+    public Parameters(@NotNull ParametersContext context, @NotNull HttpServletRequest request) {
+        this(context, context.getWorkItem(request.getParameter(PARAM_PROJECT_ID), request.getParameter(PARAM_WORK_ITEM_ID)), Boolean.parseBoolean(request.getParameter(PARAM_AGGREGATED_COMPARE)),
+                Boolean.parseBoolean(request.getParameter(PARAM_COMPARE_ALL)), parseWorkflowAction(request.getParameter(PARAM_WORKFLOW_ACTION)), request.getParameter(PARAM_REVIEW_COMMENT));
     }
 
-    public Parameters(@NotNull IWorkItem workItem, @NotNull Function<IWorkItem, Properties> configurationLoader) {
-        this(workItem, false, false, null, null, configurationLoader);
+    public Parameters(@NotNull ParametersContext context, @NotNull IWorkItem workItem) {
+        this(context, workItem, false, false, null, null);
     }
 
     public @NotNull IWorkItem getWorkItem() {
@@ -321,18 +270,8 @@ public class Parameters {
         }
     }
 
-    private @Nullable IWorkflowAction getAvailableWorkflowAction(@NotNull String actionName) {
-        IWorkflowAction[] availableActions = trackerService.getWorkflowManager().getAvailableActions(workItem);
-        for (IWorkflowAction availableAction : availableActions) {
-            if (actionName.equals(availableAction.getNativeActionId())) {
-                return availableAction;
-            }
-        }
-        return null;
-    }
-
     private void performWFAction(@NotNull String actionName) {
-        IWorkflowAction workflowAction = getAvailableWorkflowAction(actionName);
+        IWorkflowAction workflowAction = context.getAvailableWorkflowAction(workItem, actionName);
         if (workflowAction != null) {
             for (String requiredFeature : workflowAction.getRequiredFeatures()) {
                 if (IWorkItem.KEY_RESOLUTION.equals(requiredFeature) && successfulReviewResolution != null) {
@@ -432,12 +371,11 @@ public class Parameters {
         if (reviewerRole == null) {
             return true;
         }
-        String currentUser = securityService.getCurrentUser();
+        String currentUser = context.getCurrentUser();
         if (currentUser == null) {
             return false;
         }
-        Collection<String> rolesForUser = securityService.getRolesForUser(currentUser, workItem.getContextId());
-        return rolesForUser.contains(reviewerRole);
+        return context.hasRole(currentUser, Objects.requireNonNull(reviewerRole), workItem.getContextId());
     }
 
     private boolean canStartReview() {
@@ -456,7 +394,7 @@ public class Parameters {
         if (reviewerField == null || !preventReviewConflicts) {
             return true;
         }
-        String currentUser = securityService.getCurrentUser();
+        String currentUser = context.getCurrentUser();
         return isUserSetAsCurrentReviewer(currentUser);
     }
 
@@ -490,11 +428,10 @@ public class Parameters {
         if (pastReviewers.contains(user)) {
             return true;
         }
-        Collection<String> rolesForUser = securityService.getRolesForUser(user, workItem.getContextId());
-        return rolesForUser.contains(reviewerRole);
+        return context.hasRole(user, Objects.requireNonNull(reviewerRole), workItem.getContextId());
     }
 
-    public final static class UserIdentity {
+    public final class UserIdentity {
 
         private @Nullable String id = null;
         private @Nullable String name = null;
@@ -504,11 +441,7 @@ public class Parameters {
                 return;
             }
             this.id = id;
-            ITrackerUser trackerUser = trackerService.getTrackerUser(id);
-            if (trackerUser.isUnresolvable()) {
-                return;
-            }
-            name = trackerUser.getName();
+            name = context.getFullNameOfUser(id);
         }
 
         public boolean hasId(@NotNull String id) {
@@ -530,7 +463,7 @@ public class Parameters {
     }
 
     public @NotNull UserIdentity identityForCurrentUser() {
-        return identityForUser(securityService.getCurrentUser());
+        return identityForUser(context.getCurrentUser());
     }
 
     public boolean wasReviewWorkflowActionTriggered() {

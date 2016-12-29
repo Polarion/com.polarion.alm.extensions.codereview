@@ -18,6 +18,7 @@ package com.polarion.alm.extensions.codereview.assigner;
 import org.jetbrains.annotations.NotNull;
 
 import com.polarion.alm.tracker.ITrackerService;
+import com.polarion.platform.context.IContextService;
 import com.polarion.platform.jobs.GenericJobException;
 import com.polarion.platform.jobs.IJobDescriptor;
 import com.polarion.platform.jobs.IJobUnit;
@@ -27,6 +28,7 @@ import com.polarion.platform.jobs.spi.JobParameterPrimitiveType;
 import com.polarion.platform.jobs.spi.SimpleJobParameter;
 import com.polarion.platform.persistence.IDataService;
 import com.polarion.platform.security.ISecurityService;
+import com.polarion.platform.service.repository.IRepositoryService;
 
 @SuppressWarnings("nls")
 public class CodeReviewAssignerJobUnitFactory implements IJobUnitFactory {
@@ -54,12 +56,16 @@ public class CodeReviewAssignerJobUnitFactory implements IJobUnitFactory {
         jobUnit.setDataService(dataService);
         jobUnit.setTrackerService(trackerService);
         jobUnit.setSecurityService(securityService);
+        jobUnit.setContextService(contextService);
+        jobUnit.setRepositoryService(repositoryService);
         return jobUnit;
     }
 
     private /*@NotNull*/ IDataService dataService;
     private /*@NotNull*/ ITrackerService trackerService;
     private /*@NotNull*/ ISecurityService securityService;
+    private /*@NotNull*/ IContextService contextService;
+    private /*@NotNull*/ IRepositoryService repositoryService;
 
     public void setDataService(@NotNull IDataService dataService) {
         this.dataService = dataService;
@@ -71,5 +77,13 @@ public class CodeReviewAssignerJobUnitFactory implements IJobUnitFactory {
 
     public void setSecurityService(@NotNull ISecurityService securityService) {
         this.securityService = securityService;
+    }
+
+    public void setContextService(@NotNull IContextService contextService) {
+        this.contextService = contextService;
+    }
+
+    public void setRepositoryService(@NotNull IRepositoryService repositoryService) {
+        this.repositoryService = repositoryService;
     }
 }

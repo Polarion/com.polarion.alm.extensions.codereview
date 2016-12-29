@@ -117,7 +117,7 @@ public class CodeReviewServlet extends HttpServlet {
             revisionsToMark.addAll(Arrays.asList(revisionsToMarkArray));
         }
 
-        final Parameters parameters = new Parameters(request, Parameters.repositoryConfigurationLoader());
+        final Parameters parameters = createParameters(request);
         if (parameters.canReview()) {
             String currentUser = securityService.getCurrentUser();
             Revisions revisions = parameters.createRevisions();
@@ -128,8 +128,12 @@ public class CodeReviewServlet extends HttpServlet {
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
+    private @NotNull Parameters createParameters(@NotNull HttpServletRequest request) {
+        return new Parameters(PlatformParametersContext.createFromPlatform(), request);
+    }
+
     private void doSetCurrentReviewer(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
-        final Parameters parameters = new Parameters(request, Parameters.repositoryConfigurationLoader());
+        final Parameters parameters = createParameters(request);
         if (parameters.mustStartReview()) {
             String currentUser = securityService.getCurrentUser();
             parameters.assignReviewerAndSaveInTX(currentUser);
@@ -216,7 +220,7 @@ public class CodeReviewServlet extends HttpServlet {
             try {
                 OutputStream out = response.getOutputStream();
                 try {
-                    String content = render(transaction.context(), new Parameters(request, Parameters.repositoryConfigurationLoader()));
+                    String content = render(transaction.context(), createParameters(request));
                     serveContent(response, out, content);
                 } finally {
                     out.close();

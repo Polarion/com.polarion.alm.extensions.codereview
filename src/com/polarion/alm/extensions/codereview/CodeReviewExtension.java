@@ -46,7 +46,7 @@ public class CodeReviewExtension implements IFormExtension {
         try {
             if (object.isPersisted() && object instanceof IWorkItem) {
                 IWorkItem workItem = (IWorkItem) object;
-                Parameters parameters = new Parameters(workItem, Parameters.repositoryConfigurationLoader());
+                Parameters parameters = createParameters(workItem);
                 Revisions revisions = parameters.createRevisions();
                 boolean separatorNeeded = false;
                 if (revisions.hasRevisionsToReview()) {
@@ -70,6 +70,10 @@ public class CodeReviewExtension implements IFormExtension {
         }
         builder.finished();
         return builder.toString();
+    }
+
+    private @NotNull Parameters createParameters(@NotNull IWorkItem workItem) {
+        return new Parameters(PlatformParametersContext.createFromPlatform(), workItem);
     }
 
     private void appendSomethingWaiting(@NotNull HtmlFragmentBuilder builder, boolean comparableRevisionToReview, boolean nonDefaultRevisionsToReview, @NotNull Parameters parameters) {
