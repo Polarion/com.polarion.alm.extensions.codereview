@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -29,17 +30,19 @@ class ReviewsCalculatorImpl implements ReviewsCalculator {
 
     private final @NotNull LocalDate decisionDate;
     private final @NotNull ReviewsCalculatorContext context;
+    private final @NotNull BiFunction<IWorkItem, ReviewsCalculatorContext, WorkItemWithHistory> workItemWithHistoryFactory;
 
-    ReviewsCalculatorImpl(@NotNull LocalDate decisionDate, @NotNull ReviewsCalculatorContext context) {
+    ReviewsCalculatorImpl(@NotNull LocalDate decisionDate, @NotNull ReviewsCalculatorContext context, @NotNull BiFunction<IWorkItem, ReviewsCalculatorContext, WorkItemWithHistory> workItemWithHistoryFactory) {
         this.decisionDate = decisionDate;
         this.context = context;
+        this.workItemWithHistoryFactory = workItemWithHistoryFactory;
     }
 
     @Override
     public @NotNull Map<String, Integer> calculateReviews(@NotNull IWorkItem workItem, @NotNull Collection<String> targetReviewers) {
         context.log("Calculating reviews per reviewer on " + decisionDate + " for Work Item " + workItem.getId());
         Map<String, Integer> reviewsPerReviewer = new HashMap<>();
-        WorkItemWithHistory workItemWithHistory = new WorkItemWithHistoryImpl(workItem, context);
+        WorkItemWithHistory workItemWithHistory = workItemWithHistoryFactory.apply(workItem, context);
         workItemWithHistory.forEachChangeFromNewestOnDate(decisionDate, change -> {
             context.log("... revision " + change);
             if (targetReviewers.contains(change.getChangeAuthor()) && wasReviewWorkflowActionTriggeredByReviewer(change)) {
