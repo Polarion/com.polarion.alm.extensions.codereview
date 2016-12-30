@@ -167,10 +167,10 @@ Additionally you can configure the Code Review extension so that the checker job
 unresolvedWorkItemWithRevisionsNeedsTimePoint=true
 ```
 
-All of this looks very good, but what if some people refuse to do code reviews even though they should? For that we offer another job that can be scheduled in global Administration / Scheduler to run regularly like this:
+All of this looks very good, but what if some people refuse to do code reviews even though they should? For that we offer another job that can be scheduled in global Administration / Scheduler like this:
 
 ```xml
-  <job cronExpression="0 0 13 ? * *" id="codereview.assigner" name="CodeReviewDemo Code Review Assigner" scope="project:codereviewdemo">
+  <job disabled="true" id="codereview.assigner" name="CodeReviewDemo Code Review Assigner" scope="project:codereviewdemo">
     <reviewerRole>project_code_reviewer</reviewerRole>
     <reviewedItemsQuery>project:codereviewdemo AND type:(task issue) AND updated:$today$</reviewedItemsQuery>
     <toBeReviewedItemsQuery>project:codereviewdemo AND type:(task issue) AND status:awaiting-code-review AND NOT HAS_VALUE:codeReviewer</toBeReviewedItemsQuery>
