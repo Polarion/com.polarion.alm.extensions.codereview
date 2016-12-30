@@ -28,8 +28,7 @@ import com.polarion.alm.extensions.codereview.ParametersContext;
 import com.polarion.alm.extensions.codereview.PlatformParametersContext;
 import com.polarion.alm.tracker.ITrackerService;
 import com.polarion.alm.tracker.model.IWorkItem;
-import com.polarion.core.util.RunnableWEx;
-import com.polarion.platform.TransactionExecuter;
+import com.polarion.platform.ITransactionService;
 import com.polarion.platform.context.IContextService;
 import com.polarion.platform.jobs.GenericJobException;
 import com.polarion.platform.jobs.IJobStatus;
@@ -56,7 +55,9 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
     private /*@NotNull*/ ISecurityService securityService;
     private /*@NotNull*/ IContextService contextService;
     private /*@NotNull*/ IRepositoryService repositoryService;
+    private /*@NotNull*/ ITransactionService transactionService;
     private /*@NotNull*/ ParametersContext parametersContext;
+    private boolean debugMode;
 
     @Override
     public void activate() throws GenericJobException {
@@ -84,6 +85,9 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         }
         if (repositoryService == null) {
             throw new GenericJobException("repositoryService is required");
+        }
+        if (transactionService == null) {
+            throw new GenericJobException("transactionService is required");
         }
         parametersContext = new PlatformParametersContext(securityService, trackerService, contextService, repositoryService);
     }
@@ -120,6 +124,14 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         this.repositoryService = repositoryService;
     }
 
+    public void setTransactionService(@NotNull ITransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
+    }
+
     @Override
     protected IJobStatus runInternal(IProgressMonitor progress) {
         try {
@@ -137,18 +149,26 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         getLogger().info("reviewer role: " + reviewerRole);
         getLogger().info("reviewed items query: " + reviewedItemsQuery);
         getLogger().info("to be reviewed items query: " + toBeReviewedItemsQuery);
+        if (debugMode) {
+            getLogger().warn("debug mode enabled - no changes will be persisted");
+        }
 
         if (progress.isCanceled()) {
             return;
         }
 
-        TransactionExecuter.execute(new RunnableWEx<Void>() {
-            @Override
-            public Void runWEx() throws Exception {
-                executeAssumingTX();
-                return null;
+        transactionService.beginTx();
+        boolean rollback = true;
+        try {
+            executeAssumingTX();
+            rollback = debugMode;
+        } finally {
+            try {
+                transactionService.endTx(rollback);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-        });
+        }
     }
 
     /* called by unit tests */

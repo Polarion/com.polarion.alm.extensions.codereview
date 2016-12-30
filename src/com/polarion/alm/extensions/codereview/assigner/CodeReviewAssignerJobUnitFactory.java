@@ -18,6 +18,7 @@ package com.polarion.alm.extensions.codereview.assigner;
 import org.jetbrains.annotations.NotNull;
 
 import com.polarion.alm.tracker.ITrackerService;
+import com.polarion.platform.ITransactionService;
 import com.polarion.platform.context.IContextService;
 import com.polarion.platform.jobs.GenericJobException;
 import com.polarion.platform.jobs.IJobDescriptor;
@@ -44,9 +45,11 @@ public class CodeReviewAssignerJobUnitFactory implements IJobUnitFactory {
     public IJobDescriptor getJobDescriptor(IJobUnit jobUnit) {
         BasicJobDescriptor desc = new BasicJobDescriptor("Code Review Assigner", jobUnit);
         JobParameterPrimitiveType stringType = new JobParameterPrimitiveType("String of characters", String.class);
+        JobParameterPrimitiveType booleanType = new JobParameterPrimitiveType("True/false", Boolean.class);
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "reviewerRole", "Reviewer Role", stringType).setRequired(true));
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "reviewedItemsQuery", "Reviewed Items Query", stringType).setRequired(true));
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "toBeReviewedItemsQuery", "To Be Reviewed Items Query", stringType).setRequired(true));
+        desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "debugMode", "Enable Debug Mode?", booleanType).setRequired(false));
         return desc;
     }
 
@@ -58,6 +61,7 @@ public class CodeReviewAssignerJobUnitFactory implements IJobUnitFactory {
         jobUnit.setSecurityService(securityService);
         jobUnit.setContextService(contextService);
         jobUnit.setRepositoryService(repositoryService);
+        jobUnit.setTransactionService(transactionService);
         return jobUnit;
     }
 
@@ -66,6 +70,7 @@ public class CodeReviewAssignerJobUnitFactory implements IJobUnitFactory {
     private /*@NotNull*/ ISecurityService securityService;
     private /*@NotNull*/ IContextService contextService;
     private /*@NotNull*/ IRepositoryService repositoryService;
+    private /*@NotNull*/ ITransactionService transactionService;
 
     public void setDataService(@NotNull IDataService dataService) {
         this.dataService = dataService;
@@ -86,4 +91,9 @@ public class CodeReviewAssignerJobUnitFactory implements IJobUnitFactory {
     public void setRepositoryService(@NotNull IRepositoryService repositoryService) {
         this.repositoryService = repositoryService;
     }
+
+    public void setTransactionService(@NotNull ITransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
 }
