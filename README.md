@@ -157,7 +157,7 @@ OK, so that looks nice and easy, but how do you prevent some revisions from slip
  - The external repository with `repositoryName` containing the id of the external repository.
 - `permittedItemsQuery` should define a query matching all Work Items that are permitted to have revisions from checked locations. (This configuration is optional.)
 
-A notification is sent when a revision is not linked at all or is linked to a resolved item where the revision not listed as reviewed.
+A notification is sent when a revision is not linked at all or is linked to a resolved item where the revision is not listed as reviewed.
 
 ![Notification](docs/notification.png)
 
