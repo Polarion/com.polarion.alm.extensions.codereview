@@ -175,6 +175,23 @@ Additionally you can configure Code Review extension so that the checker job wil
 unresolvedWorkItemWithRevisionsNeedsTimePoint=true
 ```
 
+All of this looks very good, but what if some people refuse to do code reviews although they should? For that we offer another job which
+can be scheduled in global Administration / Scheduler to run regularly like this:
+
+```xml
+  <job cronExpression="0 0 13 ? * *" id="codereview.assigner" name="CodeReviewDemo Code Review Assigner" scope="project:codereviewdemo">
+    <reviewerRole>project_code_reviewer</reviewerRole>
+    <reviewedItemsQuery>project:codereviewdemo AND type:(task issue) AND updated:$today$</reviewedItemsQuery>
+    <toBeReviewedItemsQuery>project:codereviewdemo AND type:(task issue) AND status:awaiting-code-review AND NOT HAS_VALUE:codeReviewer</toBeReviewedItemsQuery>
+  </job>
+```
+
+- `reviewerRole` should contain the name of the role added for code reviewers (can be different from the role used in the Code Review extension if you want just some people to be considered for assignment).
+- `reviewedItemsQuery` should define query matching all Work Items which should be considered when counting number of reviews done today.
+- `toBeReviewedItemsQuery` should define query matching all Work Items which need code reviewer.
+
+Code reviewers are assigned based on the number of reviews they have done today - less reviews means higher chance of being picked.
+
 ### Bonus step: A bit of automation 
 
 Let's say that your source code contains also documentation and you have decided that it does not require another pair of eyes looking at the documentation source. Such items can be almost automatically reviewed by Polarion.
