@@ -78,7 +78,7 @@ To promote a little friendly competition there is also a Review Statistics secti
 
 Let's say your code is in Polarion’s default Subversion repository and all those fancy code reviewing tools that are online and work only with Git are of no use to you. Not to mention you still want to be able to work on the revision level. Or perhaps your code is in Git, but you do not want to leave the comfort of the Polarion portal. Well, don’t despair, we have something for you.
 
-First add the Code Review Form Extension to the Form Layout Configuration, (In Administration / Work Items / Form Configuration) like this:
+First add the Code Review Form Extension to the Form Layout Configuration, (in Administration / Work Items / Form Configuration) like this:
 
 ```xml
 <extension id="codereview" label="Code Review"/>
