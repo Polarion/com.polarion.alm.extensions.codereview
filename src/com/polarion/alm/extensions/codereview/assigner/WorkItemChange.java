@@ -78,9 +78,14 @@ final class WorkItemChange {
         return (status != null) ? status.getId() : null;
     }
 
+    public @NotNull String describe() {
+        return revisionName + " (" + changeDate + ") by " + changeAuthor + " with status changed from " + previousStatus + " to " + currentStatus;
+    }
+
     @Override
     public String toString() {
-        return historicalWorkItem.getId() + " r" + revisionName + " (" + changeDate + ") by " + changeAuthor + " with status changed from " + previousStatus + " to " + currentStatus;
+        return String.format("historicalWorkItem.id: %s, revisionName: %s, changeDate: %s, changeAuthor: %s, previousStatus: %s, currentStatus; %s", historicalWorkItem.getId(), revisionName, changeDate, changeAuthor, previousStatus,
+                currentStatus);
     }
 
     @Override

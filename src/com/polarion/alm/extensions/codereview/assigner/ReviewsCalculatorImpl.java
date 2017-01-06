@@ -44,7 +44,7 @@ class ReviewsCalculatorImpl implements ReviewsCalculator {
         Map<String, Integer> reviewsPerReviewer = new HashMap<>();
         WorkItemWithHistory workItemWithHistory = workItemWithHistoryFactory.apply(workItem, context);
         workItemWithHistory.forEachChangeFromNewestOnDate(decisionDate, change -> {
-            context.log("... revision " + change);
+            context.log("... revision " + change.describe());
             if (targetReviewers.contains(change.getChangeAuthor()) && context.wasReviewWorkflowActionTriggeredByReviewer(change)) {
                 context.log("    ... had review workflow action triggered by reviewer");
                 reviewsPerReviewer.merge(change.getChangeAuthor(), 1, (a, b) -> a + b);
