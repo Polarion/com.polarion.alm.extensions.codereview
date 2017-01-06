@@ -21,22 +21,28 @@ import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import com.polarion.alm.tracker.model.IStatusOpt;
 import com.polarion.alm.tracker.model.IWorkItem;
 
 @SuppressWarnings("nls")
 final class WorkItemChange {
-    private final @Nullable IWorkItem historicalWorkItem;
+    private final @NotNull IWorkItem historicalWorkItem;
     private final @NotNull String revisionName;
     private final @Nullable LocalDate changeDate;
     private final @Nullable String changeAuthor;
+    private final @Nullable String currentStatus;
+    private final @Nullable String previousStatus;
 
-    WorkItemChange(@NotNull IWorkItem historicalWorkItem, @NotNull String revisionName, @Nullable LocalDate changeDate, @Nullable String changeAuthor) {
+    WorkItemChange(@NotNull IWorkItem historicalWorkItem, @NotNull String revisionName, @Nullable LocalDate changeDate, @Nullable String changeAuthor, @Nullable IWorkItem olderHistoricalWorkItem) {
         this.historicalWorkItem = historicalWorkItem;
         this.revisionName = revisionName;
         this.changeDate = changeDate;
         this.changeAuthor = changeAuthor;
+        currentStatus = getStatus(historicalWorkItem);
+        previousStatus = getStatus(olderHistoricalWorkItem);
     }
 
+    @NotNull
     IWorkItem getHistoricalWorkItem() {
         return historicalWorkItem;
     }
@@ -60,9 +66,21 @@ final class WorkItemChange {
         return false;
     }
 
+    boolean wasStatusChangedFrom(@Nullable String status) {
+        return Objects.equals(previousStatus, status) && !Objects.equals(previousStatus, currentStatus);
+    }
+
+    private static @Nullable String getStatus(@Nullable IWorkItem workItem) {
+        if (workItem == null) {
+            return null;
+        }
+        IStatusOpt status = workItem.getStatus();
+        return (status != null) ? status.getId() : null;
+    }
+
     @Override
     public String toString() {
-        return revisionName + " (" + changeDate + ") by " + changeAuthor;
+        return historicalWorkItem.getId() + " r" + revisionName + " (" + changeDate + ") by " + changeAuthor + " with status changed from " + previousStatus + " to " + currentStatus;
     }
 
     @Override
@@ -71,8 +89,10 @@ final class WorkItemChange {
         int result = 1;
         result = prime * result + ((changeAuthor != null) ? changeAuthor.hashCode() : 0);
         result = prime * result + ((changeDate != null) ? changeDate.hashCode() : 0);
-        result = prime * result + ((historicalWorkItem != null) ? historicalWorkItem.hashCode() : 0);
+        result = prime * result + historicalWorkItem.hashCode();
         result = prime * result + revisionName.hashCode();
+        result = prime * result + ((currentStatus != null) ? currentStatus.hashCode() : 0);
+        result = prime * result + ((previousStatus != null) ? previousStatus.hashCode() : 0);
         return result;
     }
 
@@ -85,7 +105,9 @@ final class WorkItemChange {
         return Objects.equals(changeAuthor, other.changeAuthor)
                 && Objects.equals(changeDate, other.changeDate)
                 && Objects.equals(historicalWorkItem, other.historicalWorkItem)
-                && Objects.equals(revisionName, other.revisionName);
+                && Objects.equals(revisionName, other.revisionName)
+                && Objects.equals(currentStatus, other.currentStatus)
+                && Objects.equals(previousStatus, other.previousStatus);
     }
 
 }

@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import com.polarion.alm.extensions.codereview.Parameters;
 import com.polarion.alm.extensions.codereview.ParametersContext;
@@ -212,18 +211,17 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         }
 
         @Override
-        public boolean wasReviewWorkflowActionTriggered(@NotNull IWorkItem workItem) {
-            Parameters parameters = new Parameters(parametersContext, workItem);
-            return parameters.wasReviewWorkflowActionTriggered();
-        }
-
-        @Override
-        public boolean isReviewer(@NotNull IWorkItem contextWorkItem, @Nullable String user) {
-            if (user == null) {
+        public boolean wasReviewWorkflowActionTriggeredByReviewer(@NotNull WorkItemChange change) {
+            String author = change.getChangeAuthor();
+            if (author == null) {
                 return false;
             }
-            Collection<String> rolesForUser = securityService.getRolesForUser(user, contextWorkItem.getContextId());
-            return rolesForUser.contains(reviewerRole);
+            Collection<String> rolesForUser = securityService.getRolesForUser(author, change.getHistoricalWorkItem().getContextId());
+            if (!rolesForUser.contains(reviewerRole)) {
+                return false;
+            }
+            Parameters parameters = new Parameters(parametersContext, change.getHistoricalWorkItem());
+            return change.wasStatusChangedFrom(parameters.getInReviewStatus());
         }
 
         @Override

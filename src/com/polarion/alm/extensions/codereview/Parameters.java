@@ -343,6 +343,10 @@ public class Parameters {
         return false;
     }
 
+    public @Nullable String getInReviewStatus() {
+        return inReviewStatus;
+    }
+
     public boolean isSuccessfulWorkflowActionConfigured() {
         return successfulReviewWorkflowAction != null;
     }
@@ -464,23 +468,6 @@ public class Parameters {
 
     public @NotNull UserIdentity identityForCurrentUser() {
         return identityForUser(context.getCurrentUser());
-    }
-
-    public boolean wasReviewWorkflowActionTriggered() {
-        if (inReviewStatus == null) {
-            return false;
-        }
-        String status = getEnumOptionId(workItem.getStatus());
-        @SuppressWarnings("deprecation")
-        String previousStatus = getEnumOptionId(workItem.getPreviousStatus());
-        if (Objects.equals(status, previousStatus)) {
-            return false;
-        }
-        return Objects.equals(previousStatus, inReviewStatus);
-    }
-
-    private @Nullable String getEnumOptionId(@Nullable IEnumOption enumOption) {
-        return (enumOption != null) ? enumOption.getId() : null;
     }
 
 }

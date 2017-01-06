@@ -39,25 +39,33 @@ final class WorkItemWithHistoryImpl implements WorkItemWithHistory {
     @Override
     public void forEachChangeFromNewestOnDate(@NotNull LocalDate date, @NotNull Consumer<WorkItemChange> action) {
         Iterator<IWorkItem> historyIterator = context.getHistoryOfWorkItemFromNewest(workItem);
-        while (historyIterator.hasNext()) {
-            IWorkItem historicalWI = historyIterator.next();
+        if (!historyIterator.hasNext()) {
+            return;
+        }
+        IWorkItem currentWorkItem = historyIterator.next();
+        do {
+            IWorkItem olderWorkItem = historyIterator.hasNext() ? historyIterator.next() : null;
             try {
-                WorkItemChange change = createWorkItemChange(historicalWI);
+                WorkItemChange change = createWorkItemChange(currentWorkItem, olderWorkItem);
                 if (change.wasChangedOn(date)) {
                     action.accept(change);
                 } else if (change.wasChangedEarlierThan(date)) {
+                    if (olderWorkItem != null) {
+                        olderWorkItem.forget();
+                    }
                     break;
                 }
             } finally {
-                historicalWI.forget();
+                currentWorkItem.forget();
             }
-        }
+            currentWorkItem = olderWorkItem;
+        } while (currentWorkItem != null);
     }
 
-    private @NotNull WorkItemChange createWorkItemChange(IWorkItem historicalWI) {
+    private @NotNull WorkItemChange createWorkItemChange(@NotNull IWorkItem historicalWI, @Nullable IWorkItem olderHistoricalWI) {
         IRevision revision = context.getRevisionOfHistoricalWorkItem(historicalWI);
         try {
-            return new WorkItemChange(historicalWI, revision.getName(), dateToLocalDate(revision.getCreated()), revision.getStringAuthor());
+            return new WorkItemChange(historicalWI, revision.getName(), dateToLocalDate(revision.getCreated()), revision.getStringAuthor(), olderHistoricalWI);
         } finally {
             revision.forget();
         }

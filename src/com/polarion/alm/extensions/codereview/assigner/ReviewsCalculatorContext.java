@@ -18,7 +18,6 @@ package com.polarion.alm.extensions.codereview.assigner;
 import java.util.Iterator;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.platform.persistence.model.IRevision;
@@ -31,9 +30,7 @@ interface ReviewsCalculatorContext {
     @NotNull
     Iterator<IWorkItem> getHistoryOfWorkItemFromNewest(@NotNull IWorkItem workItem);
 
-    boolean wasReviewWorkflowActionTriggered(@NotNull IWorkItem workItem);
-
-    boolean isReviewer(@NotNull IWorkItem contextWorkItem, @Nullable String user);
+    boolean wasReviewWorkflowActionTriggeredByReviewer(@NotNull WorkItemChange change);
 
     void log(@NotNull String message);
 

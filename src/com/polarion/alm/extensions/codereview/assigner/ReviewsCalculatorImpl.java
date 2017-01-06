@@ -45,20 +45,12 @@ class ReviewsCalculatorImpl implements ReviewsCalculator {
         WorkItemWithHistory workItemWithHistory = workItemWithHistoryFactory.apply(workItem, context);
         workItemWithHistory.forEachChangeFromNewestOnDate(decisionDate, change -> {
             context.log("... revision " + change);
-            if (targetReviewers.contains(change.getChangeAuthor()) && wasReviewWorkflowActionTriggeredByReviewer(change)) {
+            if (targetReviewers.contains(change.getChangeAuthor()) && context.wasReviewWorkflowActionTriggeredByReviewer(change)) {
                 context.log("    ... had review workflow action triggered by reviewer");
                 reviewsPerReviewer.merge(change.getChangeAuthor(), 1, (a, b) -> a + b);
             }
         });
         return reviewsPerReviewer;
-    }
-
-    private boolean wasReviewWorkflowActionTriggeredByReviewer(@NotNull WorkItemChange change) {
-        IWorkItem workItem = change.getHistoricalWorkItem();
-        if (!context.wasReviewWorkflowActionTriggered(workItem)) {
-            return false;
-        }
-        return context.isReviewer(workItem, change.getChangeAuthor());
     }
 
 }
