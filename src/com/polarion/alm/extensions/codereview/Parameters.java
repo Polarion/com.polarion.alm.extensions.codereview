@@ -303,7 +303,7 @@ public class Parameters {
             }
         }
         if (commentText != null && !commentText.isEmpty()) {
-            IComment comment = workItem.createComment(new Text(Text.TYPE_PLAIN, commentText), commentTitle, null);
+            IComment comment = workItem.createComment(Text.plain(commentText), commentTitle, null);
             comment.save();
         }
         return this;
