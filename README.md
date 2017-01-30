@@ -147,7 +147,7 @@ OK, so that looks nice and easy, but how do you prevent some revisions from slip
 			<repositoryName>codereviewdemo:codeReviewExtension</repositoryName>
 		</repositoryLocation>
 	</repositoryLocations>
-	<permittedItemsQuery>project:codereviewdemo AND type:(task issue)</permittedItemsQuery>
+	<permittedItemsQuery>project.id:codereviewdemo AND type:(task issue)</permittedItemsQuery>
   </job>
 ```
 
@@ -172,8 +172,8 @@ All of this looks very good, but what if some people refuse to do code reviews e
 ```xml
   <job disabled="true" id="codereview.assigner" name="CodeReviewDemo Code Review Assigner" scope="project:codereviewdemo">
     <reviewerRole>project_code_reviewer</reviewerRole>
-    <reviewedItemsQuery>project:codereviewdemo AND type:(task issue) AND updated:$today$</reviewedItemsQuery>
-    <toBeReviewedItemsQuery>project:codereviewdemo AND type:(task issue) AND status:awaiting-code-review AND NOT HAS_VALUE:codeReviewer</toBeReviewedItemsQuery>
+    <reviewedItemsQuery>project.id:codereviewdemo AND type:(task issue) AND updated:$today$</reviewedItemsQuery>
+    <toBeReviewedItemsQuery>project.id:codereviewdemo AND type:(task issue) AND status:awaiting-code-review AND NOT HAS_VALUE:codeReviewer</toBeReviewedItemsQuery>
   </job>
 ```
 
