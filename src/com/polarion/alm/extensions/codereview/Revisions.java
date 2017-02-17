@@ -377,7 +377,7 @@ public final class Revisions {
             workflowActionJS = " + '&workflowAction=" + workflowAction + "'";
         }
         return "(function () {var commentText = document.getElementById('" + COMMENT_TEXT_AREA_ID + "').value; var button = document.getElementById('" + reviewButtonId + "');"
-                + " window.location = document.getElementById('" + HIDDEN_ID + "').href + '&reviewComment=' + escape(commentText)" + workflowActionJS + ";" + refreshCall + "}());";
+                + " window.location = document.getElementById('" + HIDDEN_ID + "').href + '&reviewComment=' + encodeURIComponent(commentText)" + workflowActionJS + ";" + refreshCall + "}());";
     }
 
 }
