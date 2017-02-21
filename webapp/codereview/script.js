@@ -14,7 +14,7 @@ function renderNav() {
 	appendTop(navContainer);
 }
 
-function scrollTo(nodeId){
+function scrollToNode(nodeId){
 	var elementToScroll = document.getElementById(nodeId);
 	var nodes = document.getElementsByClassName("change");
 	var index = Array.prototype.indexOf.call(nodes, elementToScroll);
