@@ -442,13 +442,17 @@ public class CodeReviewServlet extends HttpServlet {
                 appendNotTextFileWarning(boxBuilder);
             }
         } else if (metaData.isRemoved()) {
-            ILocation previousStateLocation = getPreviousState(changeLocationTo);
-            appendFileInfo(boxBuilder, previousStateLocation, metaData, revision);
-            appendFileInfoLite(fileInfo.append(), previousStateLocation, metaData, revision);
-            if (isValidFileForCompare(previousStateLocation, connection)) {
-                appendHTMLContent(boxBuilder, connection, previousStateLocation, false);
+            ILocation previousState = getPreviousState(changeLocationTo);
+            appendFileInfo(boxBuilder, previousState, metaData, revision);
+            appendFileInfoLite(fileInfo.append(), previousState, metaData, revision);
+            if (connection.exists(previousState)) {
+                if (isValidFileForCompare(previousState, connection)) {
+                    appendHTMLContent(boxBuilder, connection, previousState, false);
+                } else {
+                    appendNotTextFileWarning(boxBuilder);
+                }
             } else {
-                appendNotTextFileWarning(boxBuilder);
+                appendFileRemovedDuringCopy(builder);
             }
         } else if (metaData.isModified()) {
             ILocation previousState = getPreviousState(changeLocationTo);
@@ -483,10 +487,14 @@ public class CodeReviewServlet extends HttpServlet {
             ILocation previousState = getPreviousState(changeLocationTo);
             appendFileInfo(boxBuilder, previousState, metaData, revision);
             appendFileInfoLite(fileInfo.append(), previousState, metaData, revision);
-            if (isValidFileForCompare(previousState, connection)) {
-                appendHTMLContent(boxBuilder, connection, previousState, false);
+            if (connection.exists(previousState)) {
+                if (isValidFileForCompare(previousState, connection)) {
+                    appendHTMLContent(boxBuilder, connection, previousState, false);
+                } else {
+                    appendNotTextFileWarning(boxBuilder);
+                }
             } else {
-                appendNotTextFileWarning(boxBuilder);
+                appendFileRemovedDuringCopy(builder);
             }
         } else if (metaData.isModified()) {
             ILocation previousState = getFirstPrevState(metaData, allRevisions);
@@ -500,7 +508,11 @@ public class CodeReviewServlet extends HttpServlet {
         }
     }
 
-    private void appendNotTextFileWarning(HtmlContentBuilder builder) {
+    private void appendFileRemovedDuringCopy(@NotNull HtmlContentBuilder builder) {
+        builder.tag().div().append().text("File was removed during copy operation.");
+    }
+
+    private void appendNotTextFileWarning(@NotNull HtmlContentBuilder builder) {
         builder.tag().div().append().text("This is not a text file.");
     }
 
