@@ -452,7 +452,7 @@ public class CodeReviewServlet extends HttpServlet {
                     appendNotTextFileWarning(boxBuilder);
                 }
             } else {
-                appendFileRemovedDuringCopy(builder);
+                appendFileRemovedDuringCopy(boxBuilder);
             }
         } else if (metaData.isModified()) {
             ILocation previousState = getPreviousState(changeLocationTo);
@@ -494,7 +494,7 @@ public class CodeReviewServlet extends HttpServlet {
                     appendNotTextFileWarning(boxBuilder);
                 }
             } else {
-                appendFileRemovedDuringCopy(builder);
+                appendFileRemovedDuringCopy(boxBuilder);
             }
         } else if (metaData.isModified()) {
             ILocation previousState = getFirstPrevState(metaData, allRevisions);
