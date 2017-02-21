@@ -11,6 +11,7 @@
 	
 	<contribution configuration-id="com.polarion.platform.jobs.configuration">
 		<jobUnitFactory name="codereview.checker" factory="codeReviewCheckerJobUnitFactory"/>
+		<jobUnitFactory name="codereview.assigner" factory="codeReviewAssignerJobUnitFactory"/>
 	</contribution>
 	
 	<service-point id="codeReviewCheckerJobUnitFactory" interface="com.polarion.platform.jobs.IJobUnitFactory">
@@ -19,5 +20,12 @@
 			</construct>
 		</invoke-factory>
 	</service-point>
-	
+
+	<service-point id="codeReviewAssignerJobUnitFactory" interface="com.polarion.platform.jobs.IJobUnitFactory">
+		<invoke-factory>
+			<construct class="com.polarion.alm.extensions.codereview.assigner.CodeReviewAssignerJobUnitFactory">
+			</construct>
+		</invoke-factory>
+	</service-point>
+
 </module>

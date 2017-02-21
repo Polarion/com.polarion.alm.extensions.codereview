@@ -117,22 +117,26 @@ public class CodeReviewServlet extends HttpServlet {
             revisionsToMark.addAll(Arrays.asList(revisionsToMarkArray));
         }
 
-        final Parameters parameters = new Parameters(request, Parameters.repositoryConfigurationLoader());
+        final Parameters parameters = createParameters(request);
         if (parameters.canReview()) {
             String currentUser = securityService.getCurrentUser();
             Revisions revisions = parameters.createRevisions();
             String reviewedRevisions = revisions.markReviewed(revisionsToMark, currentUser, parameters).getReviewedRevisionsFieldValue();
-            parameters.storeWorkItem(reviewedRevisions, currentUser, !revisions.hasRevisionsToReview());
+            parameters.updateWorkItemAndSaveInTX(reviewedRevisions, currentUser, !revisions.hasRevisionsToReview());
         }
 
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
+    private @NotNull Parameters createParameters(@NotNull HttpServletRequest request) {
+        return new Parameters(PlatformParametersContext.createFromPlatform(), request);
+    }
+
     private void doSetCurrentReviewer(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
-        final Parameters parameters = new Parameters(request, Parameters.repositoryConfigurationLoader());
+        final Parameters parameters = createParameters(request);
         if (parameters.mustStartReview()) {
             String currentUser = securityService.getCurrentUser();
-            parameters.storeWorkItem(null, currentUser, false);
+            parameters.assignReviewerAndSaveInTX(currentUser);
         }
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
@@ -216,7 +220,7 @@ public class CodeReviewServlet extends HttpServlet {
             try {
                 OutputStream out = response.getOutputStream();
                 try {
-                    String content = render(transaction.context(), new Parameters(request, Parameters.repositoryConfigurationLoader()));
+                    String content = render(transaction.context(), createParameters(request));
                     serveContent(response, out, content);
                 } finally {
                     out.close();
@@ -581,14 +585,19 @@ public class CodeReviewServlet extends HttpServlet {
     }
 
     private void appendHTMLContent(@NotNull HtmlContentBuilder builder, @NotNull IRepositoryReadOnlyConnection connection, @NotNull ILocation location, boolean create) {
-        String content = getStringContent(connection, location);
-        HtmlTagBuilder compareContainer = builder.tag().div();
-        compareContainer.attributes().className("cr_file_content " + (create ? "cr_file_content_add" : "cr_file_content_delete"));
+        if (!create && !connection.exists(location)) {
+            builder.tag().div().append().text("File was removed during copy operation.");
+        } else {
+            String content = getStringContent(connection, location);
+            HtmlTagBuilder compareContainer = builder.tag().div();
+            compareContainer.attributes().className("cr_file_content " + (create ? "cr_file_content_add" : "cr_file_content_delete"));
 
-        HtmlTagBuilder pre = compareContainer.append().tag().pre();
-        HtmlTagBuilder code = pre.append().tag().byName("code");
-        appendStyle(location, code);
-        code.append().text(content);
+            HtmlTagBuilder pre = compareContainer.append().tag().pre();
+            HtmlTagBuilder code = pre.append().tag().byName("code");
+            appendStyle(location, code);
+            code.append().text(content);
+
+        }
     }
 
     static void appendStyle(@NotNull ILocation first, @NotNull HtmlTagBuilder code) {

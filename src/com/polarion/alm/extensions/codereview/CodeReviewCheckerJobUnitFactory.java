@@ -15,6 +15,7 @@
  */
 package com.polarion.alm.extensions.codereview;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -22,9 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -36,6 +35,7 @@ import com.polarion.alm.tracker.model.ITrackerRevision;
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.platform.announce.Announcement;
 import com.polarion.platform.announce.IAnnouncerService;
+import com.polarion.platform.context.IContextService;
 import com.polarion.platform.jobs.GenericJobException;
 import com.polarion.platform.jobs.IJobDescriptor;
 import com.polarion.platform.jobs.IJobDescriptor.IJobParameterGroup;
@@ -55,6 +55,7 @@ import com.polarion.platform.persistence.IDataService;
 import com.polarion.platform.persistence.model.IRevision;
 import com.polarion.platform.repository.external.IExternalRepositoryProvider.IExternalRepository;
 import com.polarion.platform.repository.external.IExternalRepositoryProviderRegistry;
+import com.polarion.platform.security.ISecurityService;
 import com.polarion.platform.service.repository.IRepositoryService;
 import com.polarion.platform.service.repository.IRevisionMetaData;
 import com.polarion.subterra.base.location.ILocation;
@@ -154,6 +155,8 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
     private /*@NotNull*/ IRepositoryService repoService;
     private /*@NotNull*/ IAnnouncerService announcerService;
     private /*@NotNull*/ IExternalRepositoryProviderRegistry externalRepositoryProviderRegistry;
+    private /*@NotNull*/ ISecurityService securityService;
+    private /*@NotNull*/ IContextService contextService;
 
     public void setDataService(@NotNull IDataService dataService) {
         this.dataService = dataService;
@@ -175,13 +178,21 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
         this.externalRepositoryProviderRegistry = externalRepositoryProviderRegistry;
     }
 
+    public void setSecurityService(@NotNull ISecurityService securityService) {
+        this.securityService = securityService;
+    }
+
+    public void setContextService(@NotNull IContextService contextService) {
+        this.contextService = contextService;
+    }
+
     public final class CodeReviewCheckerJobUnit extends AbstractJobUnit {
 
         public CodeReviewCheckerJobUnit(String name, IJobUnitFactory creator) {
             super(name, creator);
         }
 
-        private final @NotNull Function<IWorkItem, Properties> configurationLoader = Parameters.perContextCachingConfigurationLoader(Parameters.repositoryConfigurationLoader());
+        private final @NotNull ParametersContext parametersContext = new PlatformParametersContext(securityService, trackerService, contextService, repoService);
         private /*@NotNull*/ String[] notificationReceivers;
         private /*@NotNull*/ String notificationSender;
         private @Nullable String notificationSubjectPrefix;
@@ -371,7 +382,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
                 getLogger().info("      forbidden " + wi.getId());
                 needsReview = true;
             } else {
-                Parameters parameters = new Parameters(wi, configurationLoader);
+                Parameters parameters = new Parameters(parametersContext, wi);
                 Revisions revisions = parameters.createRevisions();
                 if (wi.getResolution() == null) {
                     if (parameters.unresolvedWorkItemWithRevisionsNeedsTimePoint()) {
@@ -421,7 +432,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             details.append("Orphaned revisions:\n\n");
             orphanedRevisions.forEach(revision -> {
                 details.append("<a href=\"");
-                details.append(System.getProperty("base.url"));
+                details.append(getRevisionViewAbsoluteURL(revision.getViewURL()));
                 details.append(revision.getViewURL());
                 details.append("\">");
                 details.append(revision.getName());
@@ -445,6 +456,19 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             });
 
             return "<html><body><b>Summary:</b><br/><br/>" + summary.toString() + "<br/><br/>\r\n" + "<b>Details:</b> <pre>" + details.toString() + "</pre></body></html>";
+        }
+
+        private @NotNull String getRevisionViewAbsoluteURL(@NotNull String viewUrl) {
+            URI uri = null;
+            try {
+                uri = new URI(viewUrl);
+            } catch (Exception e) {
+                //do nothing
+            }
+            if (uri != null && !uri.isAbsolute()) {
+                viewUrl = System.getProperty("base.url") + viewUrl;
+            }
+            return viewUrl;
         }
 
         private void sendNotification(@NotNull List<ITrackerRevision> orphanedRevisions, @NotNull Set<IWorkItem> wisToBeReviewed) {

@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import com.polarion.alm.extensions.codereview.Parameters.Link;
 import com.polarion.alm.extensions.codereview.Parameters.UserIdentity;
-import com.polarion.alm.extensions.codereview.Parameters.WorkflowAction;
 import com.polarion.alm.projects.IProjectService;
 import com.polarion.alm.shared.api.utils.html.HtmlContentBuilder;
 import com.polarion.alm.shared.api.utils.html.HtmlFragmentBuilder;
@@ -219,6 +218,10 @@ public final class Revisions {
 
     public boolean hasRevisionsToReviewAuthoredByCurrentUser(@NotNull Parameters parameters) {
         UserIdentity userIdentity = parameters.identityForCurrentUser();
+        return hasRevisionsToReviewAuthoredByUser(userIdentity);
+    }
+
+    public boolean hasRevisionsToReviewAuthoredByUser(@NotNull UserIdentity userIdentity) {
         for (RevisionModel revisionModel : revisionModels) {
             if (!revisionModel.reviewed && revisionModel.isAuthoredByUser(userIdentity)) {
                 return true;
@@ -269,7 +272,14 @@ public final class Revisions {
         return td;
     }
 
+    private static final String COMMENT_TEXT_AREA_ID = "commentTextArea";
+    private static final String REVIEW_ALL_ID = "reviewAll";
+    private static final String REVIEW_ALL_ADVANCE_ID = "reviewAllAdvance";
+    private static final String REVIEW_ALL_REOPEN_ID = "reviewAllReopen";
+    private static final String HIDDEN_ID = "hidden";
+
     private static final @NotNull String refreshCall = "setTimeout(function() { var refreshes = document.querySelectorAll('[src*=refreshBtn]'); refreshes[refreshes.length - 1].parentNode.click(); }, 500);";
+    private static final @NotNull String showAreaCall = "(function () {var commentTextArea = document.getElementById('" + COMMENT_TEXT_AREA_ID + "'); commentTextArea.style.display='block'; }());";
 
     public void asHTMLTable(@NotNull HtmlFragmentBuilder builder, @NotNull Parameters parameters) {
         HtmlContentBuilder form = builder.html(
@@ -292,6 +302,8 @@ public final class Revisions {
         }
         if (canReview) {
             appendButtons(parameters, form);
+            form.tag().br();
+            form.html("<textarea name='reviewComment' placeholder='Type your comment' id='" + COMMENT_TEXT_AREA_ID + "' style='display:none' rows='8' cols='140'></textarea>");
         }
         form.html("</form>");
     }
@@ -319,32 +331,53 @@ public final class Revisions {
     }
 
     private void appendButtons(@NotNull Parameters parameters, @NotNull HtmlContentBuilder form) {
-        form.html("<input type=\"submit\" name=\"" + CodeReviewServlet.PARAM_REVIEW_SELECTED + "\" value=\"Review selected\">");
-        form.nbsp();
+        form.html("<input type='submit' name='" + CodeReviewServlet.PARAM_REVIEW_SELECTED + "' value='Review selected' >");
+
         Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_REVIEW_SELECTED, "1");
         for (RevisionModel revisionModel : revisionModels) {
             if (!revisionModel.reviewed) {
                 link.withAdditionalParameter(CodeReviewServlet.PARAM_REVISIONS_TO_MARK, revisionModel.getKey());
             }
         }
-        HtmlTagBuilder reviewAll = form.tag().b().append().tag().a();
-        reviewAll.attributes().href(link.toHtmlLink());
-        reviewAll.attributes().onClick(refreshCall);
-        reviewAll.append().text("[ Review all ]");
-        if (parameters.isWorkflowActionConfigured() && !hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
-            form.nbsp();
-            HtmlTagBuilder reviewAllSuccess = form.tag().b().append().tag().a();
-            reviewAllSuccess.attributes().href(link.withWorkflowAction(WorkflowAction.successfulReview).toHtmlLink());
-            reviewAllSuccess.attributes().onClick(refreshCall);
-            reviewAllSuccess.append().text("[ Review all & advance ]");
+        addReviewButton(form, REVIEW_ALL_ID, "[ Review all ]", null);
+
+        if (parameters.isSuccessfulWorkflowActionConfigured() && !hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
+            addReviewButton(form, REVIEW_ALL_ADVANCE_ID, "[ Review all & advance ]", Parameters.WorkflowAction.successfulReview);
         }
+        if (parameters.isUnsuccessfulWorkflowActionConfigured()) {
+            addReviewButton(form, REVIEW_ALL_REOPEN_ID, "[ Review all & reopen ]", Parameters.WorkflowAction.unsuccessfulReview);
+        }
+        addButton(form, null, null, "Add Comment", showAreaCall, "color:#369;font-size:12px;");
+
+        addButton(form, link, HIDDEN_ID, "", "", "display:block");
+    }
+
+    private void addReviewButton(@NotNull HtmlContentBuilder form, @NotNull String id, @NotNull String text, @Nullable Parameters.WorkflowAction workflowAction) {
+        addButton(form, null, id, text, reviewButtonCallback(id, workflowAction), null);
+    }
+
+    private void addButton(@NotNull HtmlContentBuilder form, @Nullable Link link, @Nullable String id, @NotNull String text, @NotNull String js, @Nullable String style) {
+        form.nbsp();
+        HtmlTagBuilder button = form.tag().b().append().tag().a();
+        button.attributes().href(link != null ? link.toHtmlLink() : HtmlLinkFactory.fromEncodedUrl("javascript:void(0)}"));
+        button.attributes().id(id);
+        button.attributes().onClick(js);
+        button.attributes().style(style);
+        button.append().text(text);
     }
 
     private void appendStartReviewButton(@NotNull Parameters parameters, @NotNull HtmlContentBuilder form) {
         Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_SET_CURRENT_REVIEWER, "1");
-        HtmlTagBuilder startReview = form.tag().b().append().tag().a();
-        startReview.attributes().href(link.toHtmlLink());
-        startReview.attributes().onClick(refreshCall);
-        startReview.append().text("[ Start review ]");
+        addButton(form, link, "startReview", "[ Start review ]", refreshCall, null);
     }
+
+    private @NotNull String reviewButtonCallback(@NotNull String reviewButtonId, @Nullable Parameters.WorkflowAction workflowAction) {
+        String workflowActionJS = "";
+        if (workflowAction != null) {
+            workflowActionJS = " + '&workflowAction=" + workflowAction + "'";
+        }
+        return "(function () {var commentText = document.getElementById('" + COMMENT_TEXT_AREA_ID + "').value; var button = document.getElementById('" + reviewButtonId + "');"
+                + " window.location = document.getElementById('" + HIDDEN_ID + "').href + '&reviewComment=' + encodeURIComponent(commentText)" + workflowActionJS + ";" + refreshCall + "}());";
+    }
+
 }
