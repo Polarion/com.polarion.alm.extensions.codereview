@@ -541,7 +541,7 @@ public class CodeReviewServlet extends HttpServlet {
         }
 
         HtmlTagBuilder fileLink = locationLabel.append().tag().a();
-        fileLink.attributes().onClick("scrollTo('" + createElementIdFromLocation(changeLocationTo) + "')");
+        fileLink.attributes().onClick("scrollToNode('" + createElementIdFromLocation(changeLocationTo) + "')");
         fileLink.append().tag().span().append().text(changeLocationTo.getLastComponent());
         fileLink.append().text(" r.");
         fileLink.append().text(revision.getName());
