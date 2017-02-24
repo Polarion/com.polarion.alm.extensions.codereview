@@ -140,13 +140,13 @@ public class RevisionsRenderer {
     }
 
     private void addReviewButton(@NotNull HtmlContentBuilder form, @NotNull String id, @NotNull String text, @Nullable Parameters.WorkflowAction workflowAction) {
-        addButton(form, null, id, text, reviewButtonCallback(id, workflowAction), null);
+        addButton(form, null, id, text, reviewButtonCallback(workflowAction), null);
     }
 
     private void addButton(@NotNull HtmlContentBuilder form, @Nullable Link link, @Nullable String id, @NotNull String text, @NotNull String js, @Nullable String style) {
         form.nbsp();
         HtmlTagBuilder button = form.tag().b().append().tag().a();
-        button.attributes().href(link != null ? link.toHtmlLink() : HtmlLinkFactory.fromEncodedUrl("javascript:void(0)}"));
+        button.attributes().href(link != null ? link.toHtmlLink() : HtmlLinkFactory.fromEncodedUrl("javascript:void(0);"));
         button.attributes().id(id);
         button.attributes().onClick(js);
         button.attributes().style(style);
@@ -158,12 +158,12 @@ public class RevisionsRenderer {
         addButton(form, link, "startReview", "[ Start review ]", refreshCall, null);
     }
 
-    private @NotNull String reviewButtonCallback(@NotNull String reviewButtonId, @Nullable Parameters.WorkflowAction workflowAction) {
+    private @NotNull String reviewButtonCallback(@Nullable Parameters.WorkflowAction workflowAction) {
         String workflowActionJS = "";
         if (workflowAction != null) {
             workflowActionJS = " + '&workflowAction=" + workflowAction + "'";
         }
-        return "(function () {var commentText = document.getElementById('" + COMMENT_TEXT_AREA_ID + "').value; var button = document.getElementById('" + reviewButtonId + "');"
+        return "(function () {var commentText = document.getElementById('" + COMMENT_TEXT_AREA_ID + "').value;"
                 + " window.location = document.getElementById('" + HIDDEN_ID + "').href + '&reviewComment=' + encodeURIComponent(commentText)" + workflowActionJS + ";" + refreshCall + "}());";
     }
 
