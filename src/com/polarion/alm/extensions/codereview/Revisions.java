@@ -36,9 +36,6 @@ public final class Revisions {
     private static final char REVIEWED_REVISIONS_DELIMITER = ',';
     private static final @NotNull String REVIEWED_REVISIONS_DELIMITER_REGEX = "\\s*" + REVIEWED_REVISIONS_DELIMITER + "\\s*";
     private static final @NotNull String REVIEWED_REVISIONS_DELIMITER_OUTPUT = REVIEWED_REVISIONS_DELIMITER + " ";
-    static final char REPOSITORY_AND_REVISION_DELIMITER = '/';
-    static final char REVIEWER_DELIMITER = '\\';
-
     private final @NotNull List<RevisionModel> revisionModels = new ArrayList<>();
 
     public Revisions(@NotNull List<IRevision> linkedRevisions, @Nullable Integer lastReviewedRevision) {
@@ -58,14 +55,7 @@ public final class Revisions {
     private void parseReviewedRevisions(@Nullable String s, @NotNull Map<String, String> reviewedRevisions) {
         if (s != null) {
             for (String record : s.trim().split(REVIEWED_REVISIONS_DELIMITER_REGEX)) {
-                String key = record;
-                String reviewer = null;
-                int i = record.lastIndexOf(REVIEWER_DELIMITER);
-                if (i > -1) {
-                    key = record.substring(0, i);
-                    reviewer = record.substring(i + 1);
-                }
-                reviewedRevisions.put(key, reviewer);
+                RevisionModel.parseReviewedRevisionsRecord(record, reviewedRevisions);
             }
         }
     }

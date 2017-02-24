@@ -27,6 +27,9 @@ import com.polarion.platform.service.repository.IRepositoryService;
 @SuppressWarnings("nls")
 final class RevisionModel {
 
+    private static final char REPOSITORY_AND_REVISION_DELIMITER = '/';
+    private static final char REVIEWER_DELIMITER = '\\';
+
     public final @NotNull IRevision revision;
     public final boolean defaultRepository;
     public boolean reviewed;
@@ -67,12 +70,12 @@ final class RevisionModel {
 
     @NotNull
     String getKey() {
-        return revision.getRepositoryName() + Revisions.REPOSITORY_AND_REVISION_DELIMITER + revision.getName();
+        return revision.getRepositoryName() + REPOSITORY_AND_REVISION_DELIMITER + revision.getName();
     }
 
     @NotNull
     String getReviewedRevisionsRecord() {
-        return getKey() + ((reviewer != null) ? Revisions.REVIEWER_DELIMITER + reviewer : "");
+        return getKey() + ((reviewer != null) ? REVIEWER_DELIMITER + reviewer : "");
     }
 
     boolean isAuthoredByUser(@NotNull UserIdentity userIdentity) {
@@ -81,6 +84,17 @@ final class RevisionModel {
             return false;
         }
         return defaultRepository ? userIdentity.hasId(author) : userIdentity.hasIdOrName(author);
+    }
+
+    static void parseReviewedRevisionsRecord(@NotNull String record, @NotNull Map<String, String> reviewedRevisions) {
+        String key = record;
+        String reviewer = null;
+        int i = record.lastIndexOf(REVIEWER_DELIMITER);
+        if (i > -1) {
+            key = record.substring(0, i);
+            reviewer = record.substring(i + 1);
+        }
+        reviewedRevisions.put(key, reviewer);
     }
 
 }
