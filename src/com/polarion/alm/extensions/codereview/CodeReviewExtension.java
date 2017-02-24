@@ -97,7 +97,7 @@ public class CodeReviewExtension implements IFormExtension {
     }
 
     private void appendRevisionsTable(@NotNull HtmlFragmentBuilder builder, @NotNull Revisions revisions, @NotNull Parameters parameters) {
-        revisions.asHTMLTable(builder, parameters);
+        revisions.render().asHTMLTable(builder, parameters);
     }
 
     private void appendCompareAll(@NotNull HtmlFragmentBuilder builder, @NotNull Parameters parameters) {
