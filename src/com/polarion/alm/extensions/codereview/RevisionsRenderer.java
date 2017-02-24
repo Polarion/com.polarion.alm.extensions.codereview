@@ -94,7 +94,7 @@ public class RevisionsRenderer {
         if (canReview) {
             appendButtons(parameters, form);
             form.tag().br();
-            form.html("<textarea name='reviewComment' placeholder='Type your comment' id='" + COMMENT_TEXT_AREA_ID + "' style='display:none' rows='8' cols='140'></textarea>");
+            form.html("<textarea name='reviewComment' placeholder='Type your comment' id='" + COMMENT_TEXT_AREA_ID + "' style='display:none; resize:both !important; overflow:auto' rows='8' cols='140'></textarea>");
         }
         form.html("</form>");
     }
