@@ -423,7 +423,6 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             orphanedRevisions.forEach(revision -> {
                 details.append("<a href=\"");
                 details.append(getRevisionViewAbsoluteURL(revision.getViewURL()));
-                details.append(revision.getViewURL());
                 details.append("\">");
                 details.append(revision.getName());
                 details.append("</a> ");
