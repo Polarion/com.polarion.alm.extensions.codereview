@@ -125,7 +125,6 @@ public class RevisionsRenderer {
         form.html("<input type='submit' name='" + CodeReviewServlet.PARAM_REVIEW_SELECTED + "' value='Review selected' >");
 
         Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_REVIEW_SELECTED, "1");
-        revisions.forEachRevisionToReview(revisionModel -> link.withAdditionalParameter(CodeReviewServlet.PARAM_REVISIONS_TO_MARK, revisionModel.getKey()));
         addReviewButton(form, REVIEW_ALL_ID, "[ Review all ]", null);
 
         if (parameters.isSuccessfulWorkflowActionConfigured() && !revisions.hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {

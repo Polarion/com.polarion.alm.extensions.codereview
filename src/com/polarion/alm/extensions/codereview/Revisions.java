@@ -174,14 +174,6 @@ public final class Revisions {
         revisionModels.forEach(consumer);
     }
 
-    void forEachRevisionToReview(@NotNull Consumer<RevisionModel> consumer) {
-        for (RevisionModel revisionModel : revisionModels) {
-            if (!revisionModel.reviewed) {
-                consumer.accept(revisionModel);
-            }
-        }
-    }
-
     public @NotNull RevisionsRenderer render() {
         return new RevisionsRenderer(this);
     }
