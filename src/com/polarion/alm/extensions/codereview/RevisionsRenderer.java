@@ -69,8 +69,15 @@ public class RevisionsRenderer {
     private void appendButtons(@NotNull Parameters parameters, @NotNull HtmlContentBuilder form) {
         form.html("<input type='submit' name='" + CodeReviewServlet.PARAM_REVIEW_SELECTED + "' value='Review selected' >");
 
-        Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_REVIEW_SELECTED, "1");
-        addReviewButton(form, REVIEW_ALL_ID, "[ Review all ]", null);
+        if (revisions.hasRevisionsToReviewNotAuthoredByCurrentUser(parameters)) {
+            String buttonName;
+            if (revisions.hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
+                buttonName = "[ Review all not mine ]";
+            } else {
+                buttonName = "[ Review all ]";
+            }
+            addReviewButton(form, REVIEW_ALL_ID, buttonName, null);
+        }
 
         if (parameters.isSuccessfulWorkflowActionConfigured() && !revisions.hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
             addReviewButton(form, REVIEW_ALL_ADVANCE_ID, "[ Review all & advance ]", Parameters.WorkflowAction.successfulReview);
@@ -80,6 +87,7 @@ public class RevisionsRenderer {
         }
         addButton(form, null, null, "Add Comment", showAreaCall, "color:#369;font-size:12px;");
 
+        Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_REVIEW_SELECTED, "1");
         addButton(form, link, HIDDEN_ID, "", "", "display:block");
     }
 

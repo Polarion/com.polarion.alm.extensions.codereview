@@ -154,6 +154,20 @@ public final class Revisions {
         return false;
     }
 
+    public boolean hasRevisionsToReviewNotAuthoredByUser(@NotNull UserIdentity userIdentity) {
+        for (RevisionModel revisionModel : revisionModels) {
+            if (!revisionModel.reviewed && !revisionModel.isAuthoredByUser(userIdentity)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasRevisionsToReviewNotAuthoredByCurrentUser(@NotNull Parameters parameters) {
+        UserIdentity userIdentity = parameters.identityForCurrentUser();
+        return hasRevisionsToReviewNotAuthoredByUser(userIdentity);
+    }
+
     public boolean hasSelfReviewedRevisions(@NotNull Parameters parameters) {
         for (RevisionModel revisionModel : revisionModels) {
             if (revisionModel.reviewed) {
