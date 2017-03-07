@@ -97,4 +97,8 @@ final class RevisionModel {
         reviewedRevisions.put(key, reviewer);
     }
 
+    public @NotNull RevisionModelRenderer render() {
+        return new RevisionModelRenderer(this);
+    }
+
 }

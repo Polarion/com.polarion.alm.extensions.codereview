@@ -15,54 +15,22 @@
  */
 package com.polarion.alm.extensions.codereview;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.polarion.alm.extensions.codereview.Parameters.Link;
-import com.polarion.alm.projects.IProjectService;
 import com.polarion.alm.shared.api.utils.html.HtmlContentBuilder;
 import com.polarion.alm.shared.api.utils.html.HtmlFragmentBuilder;
 import com.polarion.alm.shared.api.utils.html.HtmlTagBuilder;
 import com.polarion.alm.shared.api.utils.links.HtmlLinkFactory;
-import com.polarion.platform.core.PlatformContext;
 
 @SuppressWarnings("nls")
 public class RevisionsRenderer {
-
-    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     private final @NotNull Revisions revisions;
 
     RevisionsRenderer(@NotNull Revisions revisions) {
         this.revisions = revisions;
-    }
-
-    private @NotNull String formatDate(@Nullable Date date) {
-        if (date == null) {
-            return "?";
-        }
-        return dateFormat.format(date);
-    }
-
-    private @NotNull IProjectService getProjectService() {
-        return PlatformContext.getPlatform().lookupService(IProjectService.class);
-    }
-
-    private @NotNull String getUserLabel(@Nullable String userId, @NotNull String nullUserLabel) {
-        if (userId == null) {
-            return nullUserLabel;
-        }
-        return getProjectService().getUser(userId).getLabel();
-    }
-
-    private @NotNull HtmlTagBuilder nowrapTD(@NotNull HtmlTagBuilder tr) {
-        HtmlTagBuilder td = tr.append().tag().td();
-        td.attributes().style("white-space: nowrap");
-        return td;
     }
 
     private static final String COMMENT_TEXT_AREA_ID = "commentTextArea";
@@ -86,39 +54,16 @@ public class RevisionsRenderer {
         header.append().tag().th().append().text("Author");
         header.append().tag().th().append().text("Reviewer");
         header.append().tag().th().append().text("Message");
-        boolean canReview = parameters.canReview();
-        revisions.forEachRevision(revisionModel -> appendRevisionRow(table, canReview, revisionModel));
+        revisions.forEachRevision(revisionModel -> revisionModel.render().asHTMLTableRow(table, parameters));
         if (parameters.mustStartReview()) {
             appendStartReviewButton(parameters, form);
         }
-        if (canReview) {
+        if (parameters.canReview()) {
             appendButtons(parameters, form);
             form.tag().br();
             form.html("<textarea name='reviewComment' placeholder='Type your comment' id='" + COMMENT_TEXT_AREA_ID + "' style='display:none; resize:both !important; overflow:auto' rows='8' cols='140'></textarea>");
         }
         form.html("</form>");
-    }
-
-    private void appendRevisionRow(@NotNull HtmlTagBuilder table, boolean editable, @NotNull RevisionModel revisionModel) {
-        HtmlTagBuilder tr = table.append().tag().tr();
-        tr.append().tag().td().append().html("<input type=\"checkbox\" name=\"" + CodeReviewServlet.PARAM_REVISIONS_TO_MARK + "\" value=\"" + revisionModel.getKey() + "\"" + (revisionModel.reviewed ? " checked disabled" : "")
-                + (editable ? "" : " disabled") + ">");
-        HtmlTagBuilder revisionTD = nowrapTD(tr);
-        if (!revisionModel.defaultRepository) {
-            HtmlTagBuilder span = revisionTD.append().tag().span();
-            span.attributes().title("Non-default repository " + revisionModel.revision.getRepositoryName());
-            span.append().text("(N) ");
-        }
-        revisionTD.append().decoratedLabel().link(HtmlLinkFactory.fromEncodedUrl(revisionModel.revision.getViewURL()), true).append().text(revisionModel.revision.getName());
-        nowrapTD(tr).append().text(formatDate(revisionModel.revision.getCreated()));
-        nowrapTD(tr).append().text(getUserLabel(revisionModel.revision.getStringAuthor(), "?"));
-        nowrapTD(tr).append().text(getUserLabel(revisionModel.reviewer, revisionModel.reviewed ? "?" : ""));
-        HtmlTagBuilder messageTD = nowrapTD(tr);
-        String message = revisionModel.revision.getMessage();
-        if (message != null) {
-            messageTD.attributes().title(message);
-            messageTD.append().text(message.substring(0, Math.min(message.length(), 200)));
-        }
     }
 
     private void appendButtons(@NotNull Parameters parameters, @NotNull HtmlContentBuilder form) {

@@ -460,6 +460,10 @@ public class Parameters {
             return hasId(idOrName) || hasName(idOrName);
         }
 
+        public String label() {
+            return name != null ? name : id;
+        }
+
     }
 
     public @NotNull UserIdentity identityForUser(@Nullable String user) {

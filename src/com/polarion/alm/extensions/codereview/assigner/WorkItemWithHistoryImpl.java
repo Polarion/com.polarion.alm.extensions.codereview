@@ -16,14 +16,13 @@
 package com.polarion.alm.extensions.codereview.assigner;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import com.polarion.alm.extensions.codereview.utils.DateUtils;
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.platform.persistence.model.IRevision;
 
@@ -65,17 +64,10 @@ final class WorkItemWithHistoryImpl implements WorkItemWithHistory {
     private @NotNull WorkItemChange createWorkItemChange(@NotNull IWorkItem historicalWI, @Nullable IWorkItem olderHistoricalWI) {
         IRevision revision = context.getRevisionOfHistoricalWorkItem(historicalWI);
         try {
-            return new WorkItemChange(historicalWI, revision.getName(), dateToLocalDate(revision.getCreated()), revision.getStringAuthor(), olderHistoricalWI);
+            return new WorkItemChange(historicalWI, revision.getName(), DateUtils.dateToLocalDate(revision.getCreated()), revision.getStringAuthor(), olderHistoricalWI);
         } finally {
             revision.forget();
         }
-    }
-
-    private @Nullable LocalDate dateToLocalDate(@Nullable Date date) {
-        if (date == null) {
-            return null;
-        }
-        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
 }
