@@ -83,7 +83,17 @@ public class RevisionsRenderer {
             addReviewButton(form, REVIEW_ALL_ADVANCE_ID, "[ Review all & advance ]", Parameters.WorkflowAction.successfulReview);
         }
         if (parameters.isUnsuccessfulWorkflowActionConfigured()) {
-            addReviewButton(form, REVIEW_ALL_REOPEN_ID, "[ Review all & reopen ]", Parameters.WorkflowAction.unsuccessfulReview);
+            String buttonName;
+            if (revisions.hasRevisionsToReviewNotAuthoredByCurrentUser(parameters)) {
+                if (revisions.hasRevisionsToReviewAuthoredByCurrentUser(parameters)) {
+                    buttonName = "[ Review all not mine & reopen ]";
+                } else {
+                    buttonName = "[ Review all & reopen ]";
+                }
+            } else {
+                buttonName = "[ Reopen ]";
+            }
+            addReviewButton(form, REVIEW_ALL_REOPEN_ID, buttonName, Parameters.WorkflowAction.unsuccessfulReview);
         }
         addButton(form, null, null, "Add Comment", showAreaCall, "color:#369;font-size:12px;");
 
