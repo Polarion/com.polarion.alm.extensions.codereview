@@ -15,14 +15,10 @@
  */
 package com.polarion.alm.extensions.codereview;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -32,8 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.polarion.alm.shared.api.utils.links.HtmlLink;
-import com.polarion.alm.shared.api.utils.links.HtmlLinkFactory;
 import com.polarion.alm.tracker.model.IComment;
 import com.polarion.alm.tracker.model.IStatusOpt;
 import com.polarion.alm.tracker.model.IWorkItem;
@@ -49,11 +43,11 @@ import com.polarion.subterra.base.location.ILocation;
 public class Parameters {
 
     // URL parameters
-    private static final String PARAM_WORK_ITEM_ID = CodeReviewServlet.PARAM_ID;
-    private static final String PARAM_PROJECT_ID = "projectId";
-    private static final String PARAM_AGGREGATED_COMPARE = "aggregated";
-    private static final String PARAM_COMPARE_ALL = "compareAll";
-    private static final String PARAM_WORKFLOW_ACTION = "workflowAction";
+    static final String PARAM_WORK_ITEM_ID = CodeReviewServlet.PARAM_ID;
+    static final String PARAM_PROJECT_ID = "projectId";
+    static final String PARAM_AGGREGATED_COMPARE = "aggregated";
+    static final String PARAM_COMPARE_ALL = "compareAll";
+    static final String PARAM_WORKFLOW_ACTION = "workflowAction";
     private static final String PARAM_REVIEW_COMMENT = "reviewComment";
 
     // configuration parameters
@@ -183,77 +177,8 @@ public class Parameters {
         return (reviewedRevisionsField != null) ? (String) workItem.getValue(reviewedRevisionsField) : null;
     }
 
-    public class Link {
-
-        private boolean linkAggregatedCompare;
-        private boolean linkCompareAll;
-        private @Nullable WorkflowAction linkWorkflowAction;
-        private @NotNull List<SimpleEntry<String, String>> additionalParameters = new ArrayList<>();
-
-        public Link() {
-            linkAggregatedCompare = aggregatedCompare;
-            linkCompareAll = compareAll;
-            linkWorkflowAction = workflowAction;
-        }
-
-        public @NotNull HtmlLink toHtmlLink() {
-            StringBuilder link = new StringBuilder("/polarion/codereview?");
-            link.append(PARAM_WORK_ITEM_ID);
-            link.append("=");
-            link.append(workItem.getId());
-            link.append("&");
-            link.append(PARAM_PROJECT_ID);
-            link.append("=");
-            link.append(workItem.getProjectId());
-            if (linkAggregatedCompare) {
-                link.append("&");
-                link.append(PARAM_AGGREGATED_COMPARE);
-                link.append("=true");
-            }
-            if (linkCompareAll) {
-                link.append("&");
-                link.append(PARAM_COMPARE_ALL);
-                link.append("=true");
-            }
-            if (linkWorkflowAction != null) {
-                link.append("&");
-                link.append(PARAM_WORKFLOW_ACTION);
-                link.append("=");
-                link.append(linkWorkflowAction);
-            }
-            for (Map.Entry<String, String> additionalParameterEntry : additionalParameters) {
-                link.append("&");
-                link.append(additionalParameterEntry.getKey());
-                link.append("=");
-                link.append(additionalParameterEntry.getValue());
-            }
-            return Objects.requireNonNull(HtmlLinkFactory.fromEncodedRelativeUrl(link.toString()));
-        }
-
-        public @NotNull Link withAggregatedCompare(boolean aggregatedCompare) {
-            linkAggregatedCompare = aggregatedCompare;
-            return this;
-        }
-
-        public @NotNull Link withCompareAll(boolean compareAll) {
-            linkCompareAll = compareAll;
-            return this;
-        }
-
-        public @NotNull Link withWorkflowAction(@Nullable WorkflowAction workflowAction) {
-            linkWorkflowAction = workflowAction;
-            return this;
-        }
-
-        public @NotNull Link withAdditionalParameter(@NotNull String name, @NotNull String value) {
-            additionalParameters.add(new SimpleEntry<String, String>(name, value));
-            return this;
-        }
-
-    }
-
     public @NotNull Link link() {
-        return new Link();
+        return new Link(workItem, aggregatedCompare, compareAll, workflowAction);
     }
 
     public @NotNull Revisions createRevisions() {

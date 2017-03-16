@@ -18,7 +18,6 @@ package com.polarion.alm.extensions.codereview;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.polarion.alm.extensions.codereview.Parameters.Link;
 import com.polarion.alm.shared.api.utils.html.HtmlContentBuilder;
 import com.polarion.alm.shared.api.utils.html.HtmlFragmentBuilder;
 import com.polarion.alm.shared.api.utils.html.HtmlTagBuilder;
