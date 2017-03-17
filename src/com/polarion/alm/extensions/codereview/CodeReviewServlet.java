@@ -295,11 +295,11 @@ public class CodeReviewServlet extends HttpServlet {
 
         if (aggregated) {
             HtmlTagBuilder link = nav.append().tag().a();
-            link.attributes().href(parameters.link().withAggregatedCompare(false).toHtmlLink());
+            link.attributes().href(parameters.link().withAggregatedCompare(false).htmlLink());
             link.append().text("Show Regular View");
         } else {
             HtmlTagBuilder link = nav.append().tag().a();
-            link.attributes().href(parameters.link().withAggregatedCompare(true).toHtmlLink());
+            link.attributes().href(parameters.link().withAggregatedCompare(true).htmlLink());
             link.append().text("Show Aggregated View");
         }
 

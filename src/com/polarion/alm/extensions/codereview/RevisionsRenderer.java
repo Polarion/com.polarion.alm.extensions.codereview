@@ -43,7 +43,7 @@ public class RevisionsRenderer {
 
     public void asHTMLTable(@NotNull HtmlFragmentBuilder builder, @NotNull Parameters parameters) {
         HtmlContentBuilder form = builder.html(
-                "<form method=\"post\" action=\"" + builder.target().toEncodedUrl(parameters.link().toHtmlLink())
+                "<form method=\"post\" action=\"" + builder.target().toEncodedUrl(parameters.link().htmlLink())
                         + "\" onsubmit=\"" + refreshCall + "\">");
         HtmlTagBuilder table = form.tag().table();
         HtmlTagBuilder header = table.append().tag().tr();
@@ -97,6 +97,7 @@ public class RevisionsRenderer {
         addButton(form, null, null, "Add Comment", showAreaCall, "color:#369;font-size:12px;");
 
         Link link = parameters.link().withAdditionalParameter(CodeReviewServlet.PARAM_REVIEW_SELECTED, "1");
+        link = link.withAdditionalParameters(revisions.streamForEachRevisionToReview().map(revisionModel -> new Link.ParameterImpl(CodeReviewServlet.PARAM_REVISIONS_TO_MARK, revisionModel.getKey())).toArray(Link.Parameter[]::new));
         addButton(form, link, HIDDEN_ID, "", "", "display:block");
     }
 
@@ -107,7 +108,7 @@ public class RevisionsRenderer {
     private void addButton(@NotNull HtmlContentBuilder form, @Nullable Link link, @Nullable String id, @NotNull String text, @NotNull String js, @Nullable String style) {
         form.nbsp();
         HtmlTagBuilder button = form.tag().b().append().tag().a();
-        button.attributes().href(link != null ? link.toHtmlLink() : HtmlLinkFactory.fromEncodedUrl("javascript:void(0);"));
+        button.attributes().href(link != null ? link.htmlLink() : HtmlLinkFactory.fromEncodedUrl("javascript:void(0);"));
         button.attributes().id(id);
         button.attributes().onClick(js);
         button.attributes().style(style);

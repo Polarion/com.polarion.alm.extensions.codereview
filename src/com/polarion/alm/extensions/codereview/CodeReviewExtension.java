@@ -83,7 +83,7 @@ public class CodeReviewExtension implements IFormExtension {
 
         if (comparableRevisionToReview) {
             HtmlTagBuilder link = infoBox.append().tag().a();
-            link.attributes().href(parameters.link().toHtmlLink());
+            link.attributes().href(parameters.link().htmlLink());
             link.attributes().target("_blank");
             if (nonDefaultRevisionsToReview) {
                 link.append().html("<b>Open for default repository</b>");
@@ -105,7 +105,7 @@ public class CodeReviewExtension implements IFormExtension {
 
         HtmlTagBuilder link = infoBox.append().tag().a();
         link.attributes().target("_blank");
-        link.attributes().href(parameters.link().withCompareAll(true).toHtmlLink());
+        link.attributes().href(parameters.link().withCompareAll(true).htmlLink());
         link.append().html("<b>Open compare of all revisions from default repository</b>");
     }
 

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,6 +187,11 @@ public final class Revisions {
 
     void forEachRevision(@NotNull Consumer<RevisionModel> consumer) {
         revisionModels.forEach(consumer);
+    }
+
+    @NotNull
+    Stream<RevisionModel> streamForEachRevisionToReview() {
+        return revisionModels.stream().filter(revisionModel -> !revisionModel.reviewed);
     }
 
     public @NotNull RevisionsRenderer render() {

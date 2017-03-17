@@ -15,6 +15,9 @@
  */
 package com.polarion.alm.extensions.codereview;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import org.jetbrains.annotations.NotNull;
@@ -32,21 +35,21 @@ final class Link {
     private final boolean aggregatedCompare;
     private final boolean compareAll;
     private final @Nullable WorkflowAction workflowAction;
-    private final @NotNull Parameter lastParameterInChain;
+    private final @NotNull List<Parameter> additionalParameters;
 
-    public Link(@NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction) {
-        this(workItem, aggregatedCompare, compareAll, workflowAction, new EmptyParameter());
+    Link(@NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction) {
+        this(workItem, aggregatedCompare, compareAll, workflowAction, Collections.emptyList());
     }
 
-    public Link(@NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction, @NotNull Parameter lastParameterInChain) {
+    private Link(@NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction, @NotNull List<Parameter> additionalParameters) {
         this.workItem = workItem;
         this.aggregatedCompare = aggregatedCompare;
         this.compareAll = compareAll;
         this.workflowAction = workflowAction;
-        this.lastParameterInChain = lastParameterInChain;
+        this.additionalParameters = additionalParameters;
     }
 
-    public @NotNull HtmlLink toHtmlLink() {
+    public @NotNull HtmlLink htmlLink() {
         StringBuilder link = new StringBuilder("/polarion/codereview?");
         link.append(Parameters.PARAM_WORK_ITEM_ID);
         link.append("=");
@@ -71,54 +74,52 @@ final class Link {
             link.append("=");
             link.append(workflowAction);
         }
-        link.append(lastParameterInChain.queryString());
+        for (Parameter additionalParameter : additionalParameters) {
+            link.append(additionalParameter.queryString());
+        }
         return Objects.requireNonNull(HtmlLinkFactory.fromEncodedRelativeUrl(link.toString()));
     }
 
     public @NotNull Link withAggregatedCompare(boolean aggregatedCompare) {
-        return new Link(workItem, aggregatedCompare, compareAll, workflowAction, lastParameterInChain);
+        return new Link(workItem, aggregatedCompare, compareAll, workflowAction, additionalParameters);
     }
 
     public @NotNull Link withCompareAll(boolean compareAll) {
-        return new Link(workItem, aggregatedCompare, compareAll, workflowAction, lastParameterInChain);
+        return new Link(workItem, aggregatedCompare, compareAll, workflowAction, additionalParameters);
     }
 
     public @NotNull Link withWorkflowAction(@Nullable WorkflowAction workflowAction) {
-        return new Link(workItem, aggregatedCompare, compareAll, workflowAction, lastParameterInChain);
+        return new Link(workItem, aggregatedCompare, compareAll, workflowAction, additionalParameters);
     }
 
     public @NotNull Link withAdditionalParameter(@NotNull String name, @NotNull String value) {
-        return new Link(workItem, aggregatedCompare, compareAll, workflowAction, new ParameterImpl(lastParameterInChain, name, value));
+        return withAdditionalParameters(new ParameterImpl(name, value));
     }
 
-    private interface Parameter {
-        public @NotNull String queryString();
+    public @NotNull Link withAdditionalParameters(@NotNull Parameter... additionalParameters) {
+        List<Parameter> joinedAdditionalParameters = new ArrayList<>(this.additionalParameters);
+        Collections.addAll(joinedAdditionalParameters, additionalParameters);
+        return new Link(workItem, aggregatedCompare, compareAll, workflowAction, joinedAdditionalParameters);
     }
 
-    private static final class EmptyParameter implements Parameter {
-
-        @Override
-        public @NotNull String queryString() {
-            return "";
-        }
-
+    public interface Parameter {
+        @NotNull
+        String queryString();
     }
 
-    private static final class ParameterImpl implements Parameter {
+    public static final class ParameterImpl implements Parameter {
 
-        private final @NotNull Parameter previousParameter;
         private final @NotNull String name;
         private final @NotNull String value;
 
-        public ParameterImpl(@NotNull Parameter previousParameter, @NotNull String name, @NotNull String value) {
-            this.previousParameter = previousParameter;
+        public ParameterImpl(@NotNull String name, @NotNull String value) {
             this.name = name;
             this.value = value;
         }
 
         @Override
         public @NotNull String queryString() {
-            return previousParameter.queryString() + "&" + name + "=" + value;
+            return "&" + name + "=" + value;
         }
 
     }
