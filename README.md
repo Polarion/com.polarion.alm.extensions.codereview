@@ -153,8 +153,8 @@ OK, so that looks nice and easy, but how do you prevent some revisions from slip
 
 - `notificationSubjectPrefix`, `notificationSender` and `notificationReceivers` should define the subject, sender and receivers of the notification email.
 - `repositoryLocations` should define all locations that should be checked in nested `repositoryLocation` elements that can point to:
- - the location in the default Subversion repository with `locationPath` pointing to the root of the code source tree (e.g. trunk or some branch) and `revision` set to the starting revision of the code review. Useful if a branch is created and you don’t want to go before the branch point (defaults to first revision of the `locationPath`); or
- - The external repository with `repositoryName` containing the id of the external repository. If a repository is configured on the Project level then its
+  - the location in the default Subversion repository with `locationPath` pointing to the root of the code source tree (e.g. trunk or some branch) and `revision` set to the starting revision of the code review. Useful if a branch is created and you don’t want to go before the branch point (defaults to first revision of the `locationPath`); or
+  - The external repository with `repositoryName` containing the id of the external repository. If a repository is configured on the Project level then its
   Id needs to be prefixed with the Id of the Project followed by a colon.  For example, "codereviewdemo:codeReviewExtension" would be the
   "codeReviewExtension" repository configured for the Project with the "codereviewdemo" Id.
 - `permittedItemsQuery` should define a query matching all Work Items that are permitted to have revisions from checked locations. (This configuration is optional.)
