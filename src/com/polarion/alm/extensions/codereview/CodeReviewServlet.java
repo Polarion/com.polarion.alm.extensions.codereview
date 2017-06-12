@@ -122,7 +122,7 @@ public class CodeReviewServlet extends HttpServlet {
             String currentUser = securityService.getCurrentUser();
             Revisions revisions = parameters.createRevisions();
             String reviewedRevisions = revisions.markReviewed(revisionsToMark, currentUser, parameters).getReviewedRevisionsFieldValue();
-            parameters.updateWorkItemAndSaveInTX(reviewedRevisions, currentUser, !revisions.hasRevisionsToReview());
+            parameters.updateWorkItemAndSaveInTX(reviewedRevisions, currentUser, parameters.isPermittedToPerformWorkflowAction(revisions));
         }
 
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);

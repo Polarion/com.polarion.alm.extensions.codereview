@@ -399,4 +399,16 @@ public class Parameters {
         return identityForUser(context.getCurrentUser());
     }
 
+    public boolean isPermittedToPerformWorkflowAction(@NotNull Revisions revisions) {
+        if (workflowAction != null) {
+            switch (workflowAction) {
+            case successfulReview:
+                return !revisions.hasRevisionsToReview();
+            case unsuccessfulReview:
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
