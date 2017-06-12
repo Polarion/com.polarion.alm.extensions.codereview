@@ -38,7 +38,8 @@ public class RevisionsRenderer {
     private static final String REVIEW_ALL_REOPEN_ID = "reviewAllReopen";
     private static final String HIDDEN_ID = "hidden";
 
-    private static final @NotNull String refreshCall = "setTimeout(function() { var refreshes = document.querySelectorAll('[src*=refreshBtn]'); refreshes[refreshes.length - 1].parentNode.click(); }, 500);";
+    private static final int refreshCallTimeout = 1000;
+    private static final @NotNull String refreshCall = "setTimeout(function() { var refreshes = document.querySelectorAll('[src*=refreshBtn]'); refreshes[refreshes.length - 1].parentNode.click(); }, " + refreshCallTimeout + ");";
     private static final @NotNull String showAreaCall = "(function () {var commentTextArea = document.getElementById('" + COMMENT_TEXT_AREA_ID + "'); commentTextArea.style.display='block'; }());";
 
     public void asHTMLTable(@NotNull HtmlFragmentBuilder builder, @NotNull Parameters parameters) {
