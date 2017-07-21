@@ -180,12 +180,14 @@ All of this looks very good, but what if some people refuse to do code reviews e
     <reviewerRole>project_code_reviewer</reviewerRole>
     <reviewedItemsQuery>project.id:codereviewdemo AND type:(task issue) AND updated:$today$</reviewedItemsQuery>
     <toBeReviewedItemsQuery>project.id:codereviewdemo AND type:(task issue) AND status:awaiting-code-review AND NOT HAS_VALUE:codeReviewer</toBeReviewedItemsQuery>
+    <userAccountVaultKey>codereview.assigner</userAccountVaultKey>
   </job>
 ```
 
 - `reviewerRole` should contain the name of the role added for code reviewers. (Can be different from the role used in the Code Review extension if you want only certain people considered for assignment).
 - `reviewedItemsQuery` should define a query matching all Work Items that should be considered when counting the number of reviews done today.
 - `toBeReviewedItemsQuery` should define a query matching all Work Items that need a code reviewer.
+- `userAccountVaultKey` should define the user account vault key that holds credentials for a user who has the necessary permissions to assign code reviewers to Work Items. (This configuration is optional.)
 
 Code reviewers are assigned based on the number of reviews they have done that day. Those with the least completed reviews for the day have a higher chance of being picked. (Hiding in the bathroom or under their desk is no longer an option.)
 

@@ -15,10 +15,13 @@
  */
 package com.polarion.alm.extensions.codereview.assigner;
 
+import java.security.PrivilegedAction;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.security.auth.Subject;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +39,7 @@ import com.polarion.platform.jobs.IProgressMonitor;
 import com.polarion.platform.jobs.spi.AbstractJobUnit;
 import com.polarion.platform.persistence.IDataService;
 import com.polarion.platform.persistence.model.IRevision;
+import com.polarion.platform.security.AuthenticationFailedException;
 import com.polarion.platform.security.ISecurityService;
 import com.polarion.platform.service.repository.IRepositoryService;
 
@@ -49,6 +53,7 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
     private /*@NotNull*/ String reviewerRole;
     private /*@NotNull*/ String reviewedItemsQuery;
     private /*@NotNull*/ String toBeReviewedItemsQuery;
+    private /*@NotNull*/ String userAccountVaultKey;
     private /*@NotNull*/ IDataService dataService;
     private /*@NotNull*/ ITrackerService trackerService;
     private /*@NotNull*/ ISecurityService securityService;
@@ -131,6 +136,10 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         this.debugMode = debugMode;
     }
 
+    public void setUserAccountVaultKey(@NotNull String userAccountVaultKey) {
+        this.userAccountVaultKey = userAccountVaultKey;
+    }
+
     @Override
     protected IJobStatus runInternal(IProgressMonitor progress) {
         try {
@@ -143,11 +152,12 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
         }
     }
 
-    private void execute(@NotNull IProgressMonitor progress) {
+    private void execute(@NotNull IProgressMonitor progress) throws AuthenticationFailedException {
         getLogger().info("scope: " + getScope());
         getLogger().info("reviewer role: " + reviewerRole);
         getLogger().info("reviewed items query: " + reviewedItemsQuery);
         getLogger().info("to be reviewed items query: " + toBeReviewedItemsQuery);
+        getLogger().info("user account vault key: " + userAccountVaultKey);
         if (debugMode) {
             getLogger().warn("debug mode enabled - no changes will be persisted");
         }
@@ -156,6 +166,23 @@ final class CodeReviewAssignerJobUnit extends AbstractJobUnit {
             return;
         }
 
+        if (userAccountVaultKey == null) {
+            executeInTX();
+        } else {
+            Subject subject = securityService.loginUserFromVault(userAccountVaultKey, "job/" + getName());
+            try {
+                securityService.doAsUser(subject, (PrivilegedAction<Void>) () -> {
+                    getLogger().info("switched to user \"" + securityService.getCurrentUser() + "\"");
+                    executeInTX();
+                    return null;
+                });
+            } finally {
+                securityService.logout(subject);
+            }
+        }
+    }
+
+    private void executeInTX() {
         transactionService.beginTx();
         boolean rollback = true;
         try {

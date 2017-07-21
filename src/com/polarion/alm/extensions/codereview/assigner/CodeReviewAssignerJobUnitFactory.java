@@ -49,6 +49,7 @@ public class CodeReviewAssignerJobUnitFactory implements IJobUnitFactory {
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "reviewerRole", "Reviewer Role", stringType).setRequired(true));
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "reviewedItemsQuery", "Reviewed Items Query", stringType).setRequired(true));
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "toBeReviewedItemsQuery", "To Be Reviewed Items Query", stringType).setRequired(true));
+        desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "userAccountVaultKey", "User Account Vault Key", stringType).setRequired(false));
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "debugMode", "Enable Debug Mode?", booleanType).setRequired(false));
         return desc;
     }
