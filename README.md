@@ -147,7 +147,10 @@ OK, so that looks nice and easy, but how do you prevent some revisions from slip
 			<repositoryName>codereviewdemo:codeReviewExtension</repositoryName>
 		</repositoryLocation>
 	</repositoryLocations>
-	<permittedItemsQuery>project.id:codereviewdemo AND type:(task issue)</permittedItemsQuery>
+	<permittedItemsQuery>project.id:(codereviewdemo codereviewdemo2) AND type:(task issue)</permittedItemsQuery>
+	<permittedProjects>
+		<permittedProject>codereviewdemo2</permittedProject>
+	</permittedProjects>
   </job>
 ```
 
@@ -158,6 +161,7 @@ OK, so that looks nice and easy, but how do you prevent some revisions from slip
   Id needs to be prefixed with the Id of the Project followed by a colon.  For example, "codereviewdemo:codeReviewExtension" would be the
   "codeReviewExtension" repository configured for the Project with the "codereviewdemo" Id.
 - `permittedItemsQuery` should define a query matching all Work Items that are permitted to have revisions from checked locations. (This configuration is optional.)
+- `permittedProjects` should define which projects (in addition to the scope of the job), are considered when going through Work Items linked to processed revisions. All these projects need to have their own Code Review extension configuration. (This configuration is optional.)
 
 A notification is sent when a revision is not linked at all or is linked to a resolved item where the revision is not listed as reviewed.
 
