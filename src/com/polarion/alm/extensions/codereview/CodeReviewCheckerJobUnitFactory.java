@@ -18,6 +18,7 @@ package com.polarion.alm.extensions.codereview;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -80,6 +81,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "notificationSubjectPrefix", "Notification Subject Prefix", stringType).setRequired(false));
         desc.addParameter(new LocationsJobParameter(desc.getRootParameterGroup(), "repositoryLocations", "Repository Locations").setRequired(true));
         desc.addParameter(new SimpleJobParameter(desc.getRootParameterGroup(), "permittedItemsQuery", "Permitted Items Query", stringType).setRequired(false));
+        desc.addParameter(new ArrayJobParameter(desc.getRootParameterGroup(), "permittedProjects", "Permitted Projects", stringType).setRequired(false));
         return desc;
     }
 
@@ -198,6 +200,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
         private @Nullable String notificationSubjectPrefix;
         private /*@NotNull*/ ILocation[] repositoryLocations;
         private @Nullable String permittedItemsQuery;
+        private @Nullable String[] permittedProjects;
 
         @Override
         public void activate() throws GenericJobException {
@@ -233,6 +236,10 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             this.permittedItemsQuery = permittedItemsQuery;
         }
 
+        public void setPermittedProjects(@NotNull String... permittedProjects) {
+            this.permittedProjects = permittedProjects;
+        }
+
         @Override
         protected IJobStatus runInternal(IProgressMonitor progress) {
             try {
@@ -252,6 +259,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             getLogger().info("notification subject prefix: " + notificationSubjectPrefix);
             getLogger().info("repository locations: " + Arrays.asList(repositoryLocations));
             getLogger().info("permitted items query: " + permittedItemsQuery);
+            getLogger().info("permitted projects: " + (permittedProjects != null ? Arrays.asList(permittedProjects) : Collections.emptyList()));
 
             if (progress.isCanceled()) {
                 return;
@@ -358,7 +366,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
                 return;
             }
             getLogger().info("- revision " + revision.getName());
-            List<IWorkItem> wis = ((List<IWorkItem>) revision.getLinkedWIs()).stream().filter(wi -> wi.getContextId().equals(getScope().getId()) && wi.getLinkedRevisions().contains(revision)).collect(Collectors.toList());
+            List<IWorkItem> wis = ((List<IWorkItem>) revision.getLinkedWIs()).stream().filter(wi -> isFromPermittedProject(wi) && wi.getLinkedRevisions().contains(revision)).collect(Collectors.toList());
             if (wis.isEmpty()) {
                 getLogger().info("  ... is orphaned");
                 orphanedRevisions.add(revision);
@@ -366,6 +374,20 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
                 getLogger().info("  ... is linked to:");
                 wis.forEach(wi -> processWorkItem(progress, wi, processedWIs, wisToBeReviewed, isForbiddenWorkItem));
             }
+        }
+
+        private boolean isFromPermittedProject(@NotNull IWorkItem wi) {
+            if (wi.getContextId().equals(getScope().getId())) {
+                return true;
+            }
+            if (permittedProjects != null) {
+                for (String permittedProject : permittedProjects) {
+                    if (permittedProject != null && permittedProject.equals(wi.getProjectId())) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         private void processWorkItem(@NotNull IProgressMonitor progress, @NotNull IWorkItem wi, @NotNull Set<IWorkItem> processedWIs, @NotNull Set<IWorkItem> wisToBeReviewed, @NotNull Predicate<IWorkItem> isForbiddenWorkItem) {
