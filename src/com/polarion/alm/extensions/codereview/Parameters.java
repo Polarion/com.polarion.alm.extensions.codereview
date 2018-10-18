@@ -37,6 +37,7 @@ import com.polarion.core.util.types.Text;
 import com.polarion.platform.TransactionExecuter;
 import com.polarion.platform.persistence.IEnumOption;
 import com.polarion.platform.persistence.model.IPObjectList;
+import com.polarion.platform.persistence.model.IRevision;
 import com.polarion.subterra.base.location.ILocation;
 
 @SuppressWarnings("nls")
@@ -127,7 +128,7 @@ public class Parameters {
         reviewerRole = configuration.getProperty(CONFIG_REVIEWER_ROLE);
         String pastReviewersString = configuration.getProperty(CONFIG_PAST_REVIEWERS);
         if (pastReviewersString != null) {
-            pastReviewers = new HashSet(Arrays.asList(pastReviewersString.split("\\s+")));
+            pastReviewers = new HashSet<String>(Arrays.asList(pastReviewersString.split("\\s+")));
         } else {
             pastReviewers = Collections.EMPTY_SET;
         }
@@ -182,7 +183,7 @@ public class Parameters {
     }
 
     public @NotNull Revisions createRevisions() {
-        IPObjectList linkedRevisions = workItem.getLinkedRevisions();
+        IPObjectList<IRevision> linkedRevisions = workItem.getLinkedRevisions();
         if (compareAll) {
             return new Revisions(linkedRevisions, (Integer) null);
         }

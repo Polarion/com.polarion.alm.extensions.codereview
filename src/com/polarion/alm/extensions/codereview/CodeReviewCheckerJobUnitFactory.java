@@ -94,11 +94,11 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
         @Override
         public Object convertValue(Object value) {
             if (value instanceof List) {
-                return ((List) value).stream().map(this::convertSingleItem).toArray(size -> new ILocation[size]);
+                return ((List<?>) value).stream().map(this::convertSingleItem).toArray(size -> new ILocation[size]);
             }
             if (value instanceof Map) {
                 // list with one value is detected as map
-                return new ILocation[] { convertSingleItem(((Map) value).values().iterator().next()) };
+                return new ILocation[] { convertSingleItem(((Map<?, ?>) value).values().iterator().next()) };
             }
             return new ILocation[] { convertSingleItem(value) };
         }
@@ -131,7 +131,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
         }
 
         @Override
-        public Class getTypeClass() {
+        public Class<?> getTypeClass() {
             return arrayClass;
         }
 
@@ -140,6 +140,7 @@ public class CodeReviewCheckerJobUnitFactory implements IJobUnitFactory {
             return itemType;
         }
 
+        @SuppressWarnings("rawtypes")
         @Override
         public Object createList(List items) {
             return items.toArray(new ILocation[items.size()]);
