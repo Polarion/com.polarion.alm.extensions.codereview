@@ -33,12 +33,14 @@ public class FastTrackReviewCondition implements IWorkflowCondition<IWorkItem> {
 
     private String check(@NotNull IWorkItem wi, @NotNull Parameters parameters) {
         for (IRevision revision : (List<IRevision>) wi.getLinkedRevisions()) {
-            List<ILocationChangeMetaData> changes = revision.getChangedLocations();
-            for (ILocationChangeMetaData change : changes) {
-                ILocation location = change.getChangeLocationTo();
-                if (location != null) {
-                    if (!parameters.isLocationPermittedForFastTrack(location)) {
-                        return "At least one revision (" + revision.getName() + ") needs to be reviewed by real person";
+            if (parameters.notFromIgnoredRepository(revision)) {
+                List<ILocationChangeMetaData> changes = revision.getChangedLocations();
+                for (ILocationChangeMetaData change : changes) {
+                    ILocation location = change.getChangeLocationTo();
+                    if (location != null) {
+                        if (!parameters.isLocationPermittedForFastTrack(location)) {
+                            return "At least one revision (" + revision.getName() + ") needs to be reviewed by real person";
+                        }
                     }
                 }
             }

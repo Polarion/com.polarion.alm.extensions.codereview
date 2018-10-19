@@ -57,6 +57,10 @@ public class CodeReviewExtension implements IFormExtension {
                     appendCompareAll(builder, parameters);
                     separatorNeeded = true;
                 }
+                if (revisions.hadRevisionsFilteredOut()) {
+                    appendFilteredOutRevisions(builder);
+                    separatorNeeded = true;
+                }
                 if (!revisions.isEmpty()) {
                     if (separatorNeeded) {
                         builder.tag().hr();
@@ -107,6 +111,11 @@ public class CodeReviewExtension implements IFormExtension {
         link.attributes().target("_blank");
         link.attributes().href(parameters.link().withCompareAll(true).htmlLink());
         link.append().html("<b>Open compare of all revisions from default repository</b>");
+    }
+
+    private void appendFilteredOutRevisions(@NotNull HtmlFragmentBuilder builder) {
+        HtmlTagBuilder infoBox = builder.tag().div();
+        infoBox.append().tag().span().append().html("<i>Some revisions are not shown because they are in an ignored repository</i>");
     }
 
 }
