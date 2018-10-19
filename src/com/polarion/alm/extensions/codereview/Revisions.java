@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
@@ -38,27 +39,36 @@ public final class Revisions {
     private static final @NotNull String REVIEWED_REVISIONS_DELIMITER_REGEX = "\\s*" + REVIEWED_REVISIONS_DELIMITER + "\\s*";
     private static final @NotNull String REVIEWED_REVISIONS_DELIMITER_OUTPUT = REVIEWED_REVISIONS_DELIMITER + " ";
     private final @NotNull List<RevisionModel> revisionModels = new ArrayList<>();
+    private final boolean filteredRevisions;
 
-    public Revisions(@NotNull List<IRevision> linkedRevisions, @Nullable Integer lastReviewedRevision) {
-        for (IRevision revision : linkedRevisions) {
-            revisionModels.add(new RevisionModel(revision).lastReviewedRevision(lastReviewedRevision));
-        }
+    public Revisions(@NotNull List<IRevision> linkedRevisions, @Nullable Integer lastReviewedRevision, @NotNull Predicate<IRevision> revisionsFilter) {
+        this(linkedRevisions, revisionModel -> revisionModel.lastReviewedRevision(lastReviewedRevision), revisionsFilter);
     }
 
-    public Revisions(@NotNull List<IRevision> linkedRevisions, @Nullable String reviewedRevisionsFieldValue) {
+    public Revisions(@NotNull List<IRevision> linkedRevisions, @Nullable String reviewedRevisionsFieldValue, @NotNull Predicate<IRevision> revisionsFilter) {
+        this(linkedRevisions, revisionModel -> revisionModel.reviewedRevisions(parseReviewedRevisions(reviewedRevisionsFieldValue)), revisionsFilter);
+    }
+
+    private Revisions(@NotNull List<IRevision> linkedRevisions, @NotNull UnaryOperator<RevisionModel> revisionModelProcessor, @NotNull Predicate<IRevision> revisionsFilter) {
+        boolean _filteredRevisions = false;
+        for (IRevision revision : linkedRevisions) {
+            if (revisionsFilter.test(revision)) {
+                revisionModels.add(revisionModelProcessor.apply(new RevisionModel(revision)));
+            } else {
+                _filteredRevisions = true;
+            }
+        }
+        filteredRevisions = _filteredRevisions;
+    }
+
+    private static @NotNull Map<String, String> parseReviewedRevisions(@Nullable String s) {
         Map<String, String> reviewedRevisions = new HashMap<>();
-        parseReviewedRevisions(reviewedRevisionsFieldValue, reviewedRevisions);
-        for (IRevision revision : linkedRevisions) {
-            revisionModels.add(new RevisionModel(revision).reviewedRevisions(reviewedRevisions));
-        }
-    }
-
-    private void parseReviewedRevisions(@Nullable String s, @NotNull Map<String, String> reviewedRevisions) {
         if (s != null) {
             for (String record : s.trim().split(REVIEWED_REVISIONS_DELIMITER_REGEX)) {
                 RevisionModel.parseReviewedRevisionsRecord(record, reviewedRevisions);
             }
         }
+        return reviewedRevisions;
     }
 
     public @NotNull Revisions markReviewed(@NotNull Predicate<String> shouldMark, @NotNull String reviewer, @NotNull Parameters parameters) {
@@ -179,6 +189,10 @@ public final class Revisions {
             }
         }
         return false;
+    }
+
+    public boolean hadRevisionsFilteredOut() {
+        return filteredRevisions;
     }
 
     public boolean isEmpty() {

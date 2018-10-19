@@ -116,6 +116,7 @@ unsuccessfulReviewCommentTitle=Unsuccessful Review Comment
 - `reviewCommentTitle` is the primary comment title used for all comments added via the extension. (This configuration is optional.) If it is not used, no comment title is displayed.
 - `successfulReviewCommentTitle`  is a comment’s title when the “Review all & advance” command is clicked. (This configuration is optional.) If it is not used, `reviewCommentTitle` is used instead.
 - `unsuccessfulReviewCommentTitle` is a comment’s title when the “Review all & reopen” command is clicked. (This configuration is optional). If is not used, `reviewCommentTitle` is used instead.
+- `ignoredRepositories` should contain the names, (separated by spaces), of repositories which should be ignored. (This configuration is optional.)
 
 This is what the Code Review Form Extension looks like:
 

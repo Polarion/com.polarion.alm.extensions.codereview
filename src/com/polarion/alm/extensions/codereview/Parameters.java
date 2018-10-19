@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
@@ -68,6 +69,7 @@ public class Parameters {
     private static final String CONFIG_REVIEW_COMMENT_TITLE = "reviewCommentTitle";
     private static final String CONFIG_SUCCESSFUL_REVIEW_COMMENT_TITLE = "successfulReviewCommentTitle";
     private static final String CONFIG_UNSUCCESSFUL_REVIEW_COMMENT_TITLE = "unsuccessfulReviewCommentTitle";
+    private static final String CONFIG_IGNORED_REPOSITORIES = "ignoredRepositories";
 
     public static enum WorkflowAction {
         successfulReview, unsuccessfulReview;
@@ -97,6 +99,7 @@ public class Parameters {
     private final @Nullable String reviewerRole;
     private final @NotNull Collection<String> pastReviewers;
     private final boolean preventReviewConflicts;
+    private final @NotNull Collection<String> ignoredRepositories;
 
     private Parameters(@NotNull ParametersContext context, @NotNull IWorkItem workItem, boolean aggregatedCompare, boolean compareAll, @Nullable WorkflowAction workflowAction, @Nullable String commentText) {
         super();
@@ -126,13 +129,17 @@ public class Parameters {
         fastTrackReviewer = configuration.getProperty(CONFIG_FAST_TRACK_REVIEWER);
         unresolvedWorkItemWithRevisionsNeedsTimePoint = Boolean.parseBoolean(configuration.getProperty(CONFIG_UNRESOLVED_WORK_ITEM_WITH_REVISIONS_NEEDS_TIMEPOINT));
         reviewerRole = configuration.getProperty(CONFIG_REVIEWER_ROLE);
-        String pastReviewersString = configuration.getProperty(CONFIG_PAST_REVIEWERS);
-        if (pastReviewersString != null) {
-            pastReviewers = new HashSet<String>(Arrays.asList(pastReviewersString.split("\\s+")));
-        } else {
-            pastReviewers = Collections.EMPTY_SET;
-        }
+        pastReviewers = parseSet(configuration.getProperty(CONFIG_PAST_REVIEWERS));
         preventReviewConflicts = Boolean.parseBoolean(configuration.getProperty(CONFIG_PREVENT_REVIEW_CONFLICTS));
+        ignoredRepositories = parseSet(configuration.getProperty(CONFIG_IGNORED_REPOSITORIES));
+    }
+
+    private static @NotNull Set<String> parseSet(@Nullable String s) {
+        if (s != null) {
+            return new HashSet<String>(Arrays.asList(s.split("\\s+")));
+        } else {
+            return Collections.EMPTY_SET;
+        }
     }
 
     private static @Nullable WorkflowAction parseWorkflowAction(@Nullable String s) {
@@ -185,15 +192,19 @@ public class Parameters {
     public @NotNull Revisions createRevisions() {
         IPObjectList<IRevision> linkedRevisions = workItem.getLinkedRevisions();
         if (compareAll) {
-            return new Revisions(linkedRevisions, (Integer) null);
+            return new Revisions(linkedRevisions, (Integer) null, this::notFromIgnoredRepository);
         }
         Integer lastReviewedRevision = getLastReviewedRevision();
         String reviewedRevisions = getReviewedRevisions();
         if (reviewedRevisions != null) {
-            return new Revisions(linkedRevisions, reviewedRevisions);
+            return new Revisions(linkedRevisions, reviewedRevisions, this::notFromIgnoredRepository);
         } else {
-            return new Revisions(linkedRevisions, lastReviewedRevision);
+            return new Revisions(linkedRevisions, lastReviewedRevision, this::notFromIgnoredRepository);
         }
+    }
+
+    public boolean notFromIgnoredRepository(@NotNull IRevision r) {
+        return !ignoredRepositories.contains(r.getRepositoryName());
     }
 
     private void performWFAction(@NotNull String actionName) {
