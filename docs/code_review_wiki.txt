@@ -41,7 +41,7 @@ List is sorted by the wait time, pick the oldest ones first, please.
 
 1.1 Review Statistics
 
-#set($reviewers = $trackerService.dataService.sqlSearch("SELECT USER.C_PK, COUNT(CF.C_NAME) FROM USER, WORKITEM, CF_WORKITEM CF WHERE CF.C_NAME='$codeReviewerField' AND USER.C_ID=CF.C_STRING_VALUE AND WORKITEM.C_PK=CF.FK_WORKITEM AND WORKITEM.FK_PROJECT='$project.uri' GROUP BY USER.C_PK ORDER BY COUNT(CF.C_NAME) DESC"))
+#set($reviewers = $trackerService.dataService.sqlSearch("SELECT USER.C_PK, COUNT(CF.C_NAME) FROM USER, WORKITEM, CF_WORKITEM CF, PROJECT WHERE CF.C_NAME='$codeReviewerField' AND USER.C_ID=CF.C_STRING_VALUE AND WORKITEM.C_PK=CF.FK_WORKITEM AND WORKITEM.FK_PROJECT=PROJECT.C_PK AND PROJECT.C_NAME='$project.id' GROUP BY USER.C_PK ORDER BY COUNT(CF.C_NAME) DESC"))
 #set($assigneeIds = $sortTool.sort($trackerService.dataService.securityService.getUsersForContextRole("project_assignable", $project.contextId)))
 {table}
 Reviewer | Number of Reviewed Items #foreach($assigneeId in $assigneeIds)| {user:$assigneeId|label=$trackerService.getTrackerUser($assigneeId).initials}#end
