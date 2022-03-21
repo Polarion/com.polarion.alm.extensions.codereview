@@ -17,7 +17,6 @@ package com.polarion.alm.extensions.codereview;
 
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import com.polarion.alm.shared.api.SharedContext;
@@ -26,6 +25,7 @@ import com.polarion.alm.shared.api.utils.html.HtmlFragmentBuilder;
 import com.polarion.alm.shared.api.utils.html.HtmlTagBuilder;
 import com.polarion.alm.tracker.model.IWorkItem;
 import com.polarion.alm.ui.server.forms.extensions.IFormExtension;
+import com.polarion.core.util.logging.Logger;
 import com.polarion.platform.persistence.model.IPObject;
 
 @SuppressWarnings("nls")
