@@ -1,4 +1,4 @@
-IReportsRepository.IReport#
+  Able to merge. These branches can be automatically merged.IReportsRepository.IReport#
 All Superinterfaces:
 IJobUnit#  Hamdi Saif 
  Avigail Ibarra  #إطارالتجميع_والنشر
